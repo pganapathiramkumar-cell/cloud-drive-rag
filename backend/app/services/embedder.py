@@ -17,19 +17,18 @@ def _get_client() -> cohere.Client:
 
 
 def _embed_with_retry(texts: list[str], input_type: str) -> list[list[float]]:
-    """Single batch embed with exponential backoff on 429."""
+    """Single batch embed — waits 65 s on 429 (Cohere quota resets every minute)."""
     client = _get_client()
-    for attempt in range(5):
+    for attempt in range(3):
         try:
             response = client.embed(texts=texts, model=_MODEL, input_type=input_type)
             return [list(e) for e in response.embeddings]
         except Exception as exc:
             if "429" in str(exc) or "rate limit" in str(exc).lower():
-                wait = 2 ** attempt
-                time.sleep(wait)
+                time.sleep(65)  # wait for quota window to reset
             else:
                 raise
-    raise RuntimeError("Cohere rate limit exceeded after retries")
+    raise RuntimeError("Cohere rate limit still exceeded after 3 retries (65s waits)")
 
 
 def encode(texts: list[str], input_type: str = "search_document") -> list[list[float]]:

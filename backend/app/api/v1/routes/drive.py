@@ -148,21 +148,32 @@ def _run_public_sync(job_id: str, folder_id: str, api_key: str) -> None:
         job.files_found = len(files)
 
         for f in files:
-            content_bytes, ext = gdrive.download_public_file(f["id"], f["mimeType"], api_key)
-            text = doc_parser.extract_text(content_bytes, ext)
-            if not text.strip():
-                continue
+            try:
+                content_bytes, ext = gdrive.download_public_file(f["id"], f["mimeType"], api_key)
+                text = doc_parser.extract_text(content_bytes, ext)
+                if not text.strip():
+                    job.files_skipped += 1
+                    job.skipped_files.append(f"{f['name']} — no text extracted")
+                    continue
 
-            meta = {"source": f["name"], "drive_file_id": f["id"], "folder_id": folder_id}
-            chunks = split(text, meta)
-            if not chunks:
-                continue
+                meta = {"source": f["name"], "drive_file_id": f["id"], "folder_id": folder_id}
+                chunks = split(text, meta)
+                if not chunks:
+                    job.files_skipped += 1
+                    job.skipped_files.append(f"{f['name']} — no chunks produced")
+                    continue
 
-            embeddings = encode([c["text"] for c in chunks])
-            add_chunks(chunks, embeddings)
-            job.files_indexed += 1
-            job.chunks_stored += len(chunks)
-            time.sleep(1)  # pace requests to stay within Cohere trial limits
+                embeddings = encode([c["text"] for c in chunks])
+                add_chunks(chunks, embeddings)
+                job.files_indexed += 1
+                job.chunks_stored += len(chunks)
+                job.indexed_files.append(f["name"])
+                time.sleep(3)  # pace requests — Cohere trial: 100K tokens/min
+
+            except Exception as file_exc:
+                job.files_skipped += 1
+                job.skipped_files.append(f"{f['name']} — {file_exc}")
+                continue  # move to next file
 
         job.status = "done"
     except Exception as exc:

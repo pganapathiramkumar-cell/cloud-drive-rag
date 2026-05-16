@@ -53,5 +53,8 @@ class DriveSyncStatus(BaseModel):
     folder_id: str
     files_found: int = 0
     files_indexed: int = 0
+    files_skipped: int = 0
     chunks_stored: int = 0
     message: str = ""
+    indexed_files: list[str] = []
+    skipped_files: list[str] = []

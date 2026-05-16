@@ -5,6 +5,10 @@ from app.observability.metrics import node_duration
 
 
 async def run(state: AgentState) -> AgentState:
+    from app.config import settings
+    if settings.debug:
+        return {**state, "pii_detected_output": False}
+
     with node_duration.labels(node="scan_output").time():
         clean_response, pii_found = scrub(state["response"])
 

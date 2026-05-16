@@ -13,7 +13,11 @@ export default function App() {
       <Header activeTab={activeTab} onTabChange={setActiveTab} />
       <main className="flex-1 overflow-hidden">
         {activeTab === 'chat'   && <ChatWindow />}
-        {activeTab === 'ingest' && <IngestPanel />}
+        {activeTab === 'ingest' && (
+          <div className="h-full overflow-y-auto">
+            <IngestPanel />
+          </div>
+        )}
       </main>
     </div>
   )

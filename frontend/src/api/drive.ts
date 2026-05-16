@@ -11,8 +11,11 @@ export interface DriveSyncStatus {
   folder_id: string
   files_found: number
   files_indexed: number
+  files_skipped: number
   chunks_stored: number
   message: string
+  indexed_files: string[]
+  skipped_files: string[]
 }
 
 export const driveApi = {
