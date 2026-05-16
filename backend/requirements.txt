@@ -1,0 +1,61 @@
+# Web framework
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+pydantic-settings==2.2.1
+python-multipart==0.0.9
+
+# HTTP & scraping
+httpx==0.27.0
+beautifulsoup4==4.12.3
+lxml==5.2.1
+
+# Auth
+python-jose[cryptography]==3.3.0
+
+# Rate limiting
+slowapi==0.1.9
+
+# PII detection (uses en_core_web_sm — 12 MB, not en_core_web_lg — 560 MB)
+presidio-analyzer==2.2.354
+presidio-anonymizer==2.2.354
+spacy==3.8.4
+
+# Embeddings — Cohere API (no local model, no PyTorch dependency)
+cohere==5.5.8
+
+# Vector store — Qdrant Cloud (replaces local ChromaDB)
+qdrant-client==1.9.1
+
+# LLM + orchestration
+langchain==0.3.19
+langchain-community==0.3.19
+langchain-groq==0.2.4
+langgraph==0.2.73
+
+# Session memory
+redis==5.0.6
+
+# SSE streaming
+sse-starlette==2.1.0
+
+# Observability
+prometheus-client==0.20.0
+opentelemetry-sdk==1.24.0
+opentelemetry-instrumentation-fastapi==0.45b0
+opentelemetry-exporter-otlp-proto-grpc==1.24.0
+protobuf>=3.19,<5.0   # pinned — qdrant-client pulls v6 which breaks otel-proto
+
+# Google Drive integration
+google-auth==2.29.0
+google-auth-oauthlib==1.2.0
+google-api-python-client==2.134.0
+
+# Document parsing (PDF, DOCX, PPTX, XLSX)
+PyMuPDF==1.24.5
+python-docx==1.1.2
+python-pptx==0.6.23
+openpyxl==3.1.4
+
+# Testing
+pytest==8.2.2
+pytest-asyncio==0.23.7

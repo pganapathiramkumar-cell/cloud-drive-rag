@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: enterprise-rag-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: COHERE_API_KEY
+        sync: false
+      - key: QDRANT_URL
+        sync: false
+      - key: QDRANT_API_KEY
+        sync: false
+      - key: QDRANT_COLLECTION
+        value: enterprise_rag
+      - key: REDIS_URL
+        sync: false          # use Upstash Redis — paste URL from upstash.com
+      - key: DEBUG
+        value: "false"
+      - key: OTEL_ENABLED
+        value: "false"
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        sync: false          # https://your-render-service.onrender.com/v1/drive/callback
+      - key: FRONTEND_URL
+        sync: false          # https://your-vercel-app.vercel.app
+    healthCheckPath: /v1/health
