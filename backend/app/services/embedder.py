@@ -33,12 +33,14 @@ def _embed_with_retry(texts: list[str], input_type: str) -> list[list[float]]:
 
 def encode(texts: list[str], input_type: str = "search_document") -> list[list[float]]:
     """Embed texts in small batches to stay within Cohere trial rate limits."""
+    from app.services.analytics_tracker import record_embed
     results: list[list[float]] = []
     for i in range(0, len(texts), _BATCH_SIZE):
         batch = texts[i: i + _BATCH_SIZE]
         results.extend(_embed_with_retry(batch, input_type))
+        record_embed(len(batch))
         if i + _BATCH_SIZE < len(texts):
-            time.sleep(0.5)   # brief pause between batches
+            time.sleep(0.5)
     return results
 
 

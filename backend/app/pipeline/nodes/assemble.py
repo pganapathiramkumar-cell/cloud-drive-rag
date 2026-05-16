@@ -1,14 +1,17 @@
 """Node 4 — Build the context string and citation list from retrieved docs."""
+import time
+
 from app.pipeline.state import AgentState
 from app.observability.metrics import node_duration
+from app.services.analytics_tracker import record_node_latency
 
-_MAX_CONTEXT_CHARS = 6000  # stay well within Llama 3.3 context window
+_MAX_CONTEXT_CHARS = 6000
 
 
 async def run(state: AgentState) -> AgentState:
+    start = time.monotonic()
     with node_duration.labels(node="assemble").time():
         docs = state["retrieved_docs"]
-
         context_parts: list[str] = []
         citations: list[dict] = []
         total_chars = 0
@@ -16,9 +19,8 @@ async def run(state: AgentState) -> AgentState:
         for i, doc in enumerate(docs, start=1):
             meta = doc.get("metadata", {})
             url = meta.get("url", "")
-            title = meta.get("title", f"Source {i}")
+            title = meta.get("title", meta.get("source", f"Source {i}"))
             excerpt = doc["text"][:200]
-
             chunk_text = f"[{i}] {title}\nURL: {url}\n{doc['text']}"
 
             if total_chars + len(chunk_text) > _MAX_CONTEXT_CHARS:
@@ -30,4 +32,5 @@ async def run(state: AgentState) -> AgentState:
 
         context = "\n\n---\n\n".join(context_parts)
 
+    record_node_latency("assemble", (time.monotonic() - start) * 1000)
     return {**state, "context": context, "citations": citations}

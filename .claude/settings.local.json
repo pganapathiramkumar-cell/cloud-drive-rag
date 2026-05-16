@@ -17,7 +17,8 @@
       "Bash(git commit -m 'fix: update Dockerfile — remove sentence-transformers, use en_core_web_sm *)",
       "Bash(git commit -m 'fix: add railway.toml for Docker deployment from backend folder *)",
       "Bash(git commit -m 'feat: add Metrics tab with RAG quality, latency, usage and ingestion stats *)",
-      "Bash(git commit -m 'feat: enhance metrics — top sources, recent queries, sessions, response length, Qdrant fix *)"
+      "Bash(git commit -m 'feat: enhance metrics — top sources, recent queries, sessions, response length, Qdrant fix *)",
+      "Bash(git commit -m 'feat: add Analytics tab — node latency, token cost, score distribution, coverage, sessions, errors *)"
     ]
   }
 }

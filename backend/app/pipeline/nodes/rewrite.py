@@ -1,10 +1,13 @@
 """Node 1 — Rewrite the raw query into a clear, standalone question."""
+import time
+
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
 from app.pipeline.state import AgentState
 from app.services.llm import get_llm
 from app.observability.metrics import node_duration
+from app.services.analytics_tracker import record_node_latency
 
 _TEMPLATE = PromptTemplate.from_template(
     "Rewrite the following user query to be clear, specific, and self-contained "
@@ -14,6 +17,7 @@ _TEMPLATE = PromptTemplate.from_template(
 
 
 async def run(state: AgentState) -> AgentState:
+    start = time.monotonic()
     with node_duration.labels(node="rewrite").time():
         try:
             chain = _TEMPLATE | get_llm() | StrOutputParser()
@@ -22,4 +26,5 @@ async def run(state: AgentState) -> AgentState:
         except Exception:
             rewritten = state["query"]
 
+    record_node_latency("rewrite", (time.monotonic() - start) * 1000)
     return {**state, "rewritten_query": rewritten}

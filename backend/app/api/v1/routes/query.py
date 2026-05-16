@@ -13,6 +13,7 @@ from app.pipeline.state import AgentState
 from app.services.memory import append_turn, get_history
 from app.observability.metrics import query_total, query_duration, active_sessions
 from app.services.metrics_tracker import record_query
+from app.services.analytics_tracker import record_retrieval_scores, record_error
 
 router = APIRouter()
 
@@ -86,7 +87,10 @@ async def query_endpoint(
             query_total.labels(status="success").inc()
 
             docs = final_state.get("retrieved_docs", [])
+            scores = [d.get("score", 0) for d in docs]
             sources = [d.get("metadata", {}).get("source", "") for d in docs if d.get("metadata", {}).get("source")]
+            avg_score = sum(scores) / len(scores) if scores else 0
+            record_retrieval_scores(scores, avg_score, sources, body.session_id)
             record_query(
                 success=True,
                 blocked=final_state.get("blocked", False),
@@ -105,6 +109,7 @@ async def query_endpoint(
             query_total.labels(status="error").inc()
             record_query(success=False, blocked=False, latency_ms=0,
                         pii_detected=False, retrieval_scores=[], chunks_retrieved=0)
+            record_error(str(exc))
             yield {"event": "error", "data": json.dumps({"detail": str(exc)})}
 
         finally:
