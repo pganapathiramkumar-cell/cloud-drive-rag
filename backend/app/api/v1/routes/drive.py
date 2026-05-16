@@ -11,6 +11,7 @@ from app.services import doc_parser, gdrive
 from app.services.chunker import split
 from app.services.embedder import encode
 from app.services.vectorstore import add_chunks
+from app.services.metrics_tracker import record_ingestion
 from app.config import settings
 
 import redis.asyncio as aioredis
@@ -176,6 +177,8 @@ def _run_public_sync(job_id: str, folder_id: str, api_key: str) -> None:
                 continue  # move to next file
 
         job.status = "done"
+        record_ingestion(job.files_indexed, job.files_skipped, job.chunks_stored)
+
     except Exception as exc:
         job.status = "error"
         job.message = str(exc)

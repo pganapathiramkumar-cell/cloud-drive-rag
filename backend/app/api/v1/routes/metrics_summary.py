@@ -13,14 +13,18 @@ router = APIRouter(prefix="/metrics")
 async def metrics_summary(user: dict = Depends(get_current_user)):
     summary = get_summary()
 
-    # Enrich with live Qdrant vector count
+    # Enrich with live Qdrant stats — points_count is the correct attribute
     try:
         client = _get_client()
         info = client.get_collection(settings.qdrant_collection)
-        summary["ingestion"]["qdrant_vectors"] = info.vectors_count
-        summary["ingestion"]["qdrant_status"] = info.status.value
-    except Exception:
+        points = info.points_count or 0
+        summary["ingestion"]["qdrant_vectors"] = points
+        summary["ingestion"]["qdrant_status"] = str(info.status.value) if info.status else "ok"
+        # Use Qdrant count as total_chunks if tracker shows 0 (synced before tracker was added)
+        if summary["ingestion"]["total_chunks"] == 0 and points > 0:
+            summary["ingestion"]["total_chunks"] = points
+    except Exception as exc:
         summary["ingestion"]["qdrant_vectors"] = None
-        summary["ingestion"]["qdrant_status"] = "unavailable"
+        summary["ingestion"]["qdrant_status"] = f"unavailable: {exc}"
 
     return summary

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { RefreshCw, Database, MessageSquare, Zap, Target, AlertTriangle, CheckCircle2, Info } from 'lucide-react'
+import { RefreshCw, Database, MessageSquare, Zap, Target, AlertTriangle, CheckCircle2, Info, FileText, Clock } from 'lucide-react'
 import { fetchMetrics, type MetricsSummary } from '../../api/metrics'
 
 export default function MetricsDashboard() {
@@ -82,9 +82,10 @@ export default function MetricsDashboard() {
             <StatCard label="Failed" value={data.queries.failed} sub="errors" color="red" />
             <StatCard label="Blocked" value={data.queries.blocked} sub="PII / guardrails" color="yellow" />
           </div>
-          <div className="grid grid-cols-3 gap-3 mt-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+            <MiniStat label="Unique sessions" value={data.queries.unique_sessions} />
             <MiniStat label="PII detected" value={`${data.queries.pii_detected} (${pct(data.queries.pii_rate)})`} />
-            <MiniStat label="Success rate" value={pct(data.queries.success_rate)} />
+            <MiniStat label="Avg response length" value={`${data.queries.avg_response_chars} chars`} />
             <MiniStat label="Empty context rate" value={pct(data.rag_quality.empty_context_rate)} />
           </div>
         </Section>
@@ -101,6 +102,67 @@ export default function MetricsDashboard() {
             <MiniStat label="Avg similarity score" value={data.retrieval.avg_similarity_score.toFixed(3)} />
           </div>
         </Section>
+
+        {/* ── Top Sources ── */}
+        {data.retrieval.top_sources.length > 0 && (
+          <Section title="Most Retrieved Sources" icon={<FileText size={15} />}>
+            <div className="rounded-xl border border-gray-800 bg-gray-900 p-4 space-y-2">
+              {data.retrieval.top_sources.map((s, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <span className="text-xs text-gray-600 w-4 text-right">{i + 1}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-center mb-0.5">
+                      <span className="text-xs text-gray-300 truncate">{s.source}</span>
+                      <span className="text-xs text-blue-400 shrink-0 ml-2">{s.hits} hits</span>
+                    </div>
+                    <div className="w-full bg-gray-800 rounded-full h-1">
+                      <div
+                        className="bg-blue-500 h-1 rounded-full"
+                        style={{ width: `${(s.hits / data.retrieval.top_sources[0].hits) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {/* ── Recent Queries ── */}
+        {data.recent_queries.length > 0 && (
+          <Section title="Recent Queries" icon={<Clock size={15} />}>
+            <div className="rounded-xl border border-gray-800 bg-gray-900 overflow-hidden">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-gray-800">
+                    <th className="text-left text-gray-500 font-normal px-4 py-2">Query</th>
+                    <th className="text-right text-gray-500 font-normal px-3 py-2">Chunks</th>
+                    <th className="text-right text-gray-500 font-normal px-3 py-2">Score</th>
+                    <th className="text-right text-gray-500 font-normal px-4 py-2">Latency</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.recent_queries.map((q, i) => (
+                    <tr key={i} className="border-b border-gray-800/50 hover:bg-gray-800/30">
+                      <td className="px-4 py-2 text-gray-300 max-w-xs truncate">
+                        <div className="flex items-center gap-1.5">
+                          {q.success
+                            ? <CheckCircle2 size={11} className="text-green-400 shrink-0" />
+                            : <AlertTriangle size={11} className="text-red-400 shrink-0" />
+                          }
+                          {q.query || '—'}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 text-right text-gray-400">{q.chunks}</td>
+                      <td className="px-3 py-2 text-right text-gray-400">{q.score.toFixed(3)}</td>
+                      <td className="px-4 py-2 text-right text-gray-400">{q.latency_ms.toFixed(0)}ms</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Section>
+        )}
 
         {/* ── RAG Quality ── */}
         <Section title="RAG Quality Metrics" icon={<Target size={15} />}>

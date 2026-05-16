@@ -1,7 +1,7 @@
-"""In-memory metrics tracker — accumulates query and ingestion stats across requests."""
+"""In-memory metrics tracker — accumulates stats across requests since last restart."""
 import threading
+from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Optional
 
 
 @dataclass
@@ -20,6 +20,19 @@ class _Stats:
     # Retrieval quality
     retrieval_score_samples: list = field(default_factory=list)
     chunks_retrieved_samples: list = field(default_factory=list)
+
+    # Response quality
+    response_length_samples: list = field(default_factory=list)  # char count
+    rewritten_query_lengths: list = field(default_factory=list)
+
+    # Source tracking — {filename: hit_count}
+    source_hits: dict = field(default_factory=lambda: defaultdict(int))
+
+    # Session tracking
+    unique_sessions: set = field(default_factory=set)
+
+    # Recent queries (last 20)
+    recent_queries: list = field(default_factory=list)
 
     # Ingestion
     files_indexed: int = 0
@@ -40,6 +53,11 @@ def record_query(
     pii_detected: bool,
     retrieval_scores: list[float],
     chunks_retrieved: int,
+    response_length: int = 0,
+    sources: list[str] = None,
+    session_id: str = "",
+    query_text: str = "",
+    rewritten_query: str = "",
 ) -> None:
     with _lock:
         _stats.total_queries += 1
@@ -57,9 +75,31 @@ def record_query(
         _stats.latency_samples.append(latency_ms)
 
         if retrieval_scores:
-            avg_score = sum(retrieval_scores) / len(retrieval_scores)
-            _stats.retrieval_score_samples.append(avg_score)
+            _stats.retrieval_score_samples.append(sum(retrieval_scores) / len(retrieval_scores))
         _stats.chunks_retrieved_samples.append(chunks_retrieved)
+
+        if response_length:
+            _stats.response_length_samples.append(response_length)
+
+        if rewritten_query:
+            _stats.rewritten_query_lengths.append(len(rewritten_query))
+
+        for src in (sources or []):
+            _stats.source_hits[src] += 1
+
+        if session_id:
+            _stats.unique_sessions.add(session_id)
+
+        # Keep last 20 queries
+        _stats.recent_queries.append({
+            "query": query_text[:120],
+            "latency_ms": round(latency_ms, 1),
+            "chunks": chunks_retrieved,
+            "score": round(sum(retrieval_scores) / len(retrieval_scores), 3) if retrieval_scores else 0,
+            "success": success,
+        })
+        if len(_stats.recent_queries) > 20:
+            _stats.recent_queries.pop(0)
 
 
 def record_ingestion(files_indexed: int, files_skipped: int, chunks: int) -> None:
@@ -81,29 +121,30 @@ def get_summary() -> dict:
         scores = _stats.retrieval_score_samples
         latencies = _stats.latency_samples
         chunks = _stats.chunks_retrieved_samples
+        resp_lens = _stats.response_length_samples
 
         avg_latency = (_stats.total_latency_ms / total) if total else 0
         avg_score = (sum(scores) / len(scores)) if scores else 0
         avg_chunks = (sum(chunks) / len(chunks)) if chunks else 0
         success_rate = (_stats.successful_queries / total) if total else 0
+        avg_resp_len = (sum(resp_lens) / len(resp_lens)) if resp_lens else 0
 
-        # Context precision: avg retrieval similarity score (0-1)
         context_precision = round(avg_score, 3)
-
-        # Context recall proxy: % of queries where avg score > 0.5
-        recall_hits = sum(1 for s in scores if s > 0.5)
+        recall_hits = sum(1 for s in scores if s > 0.35)
         context_recall = round(recall_hits / len(scores), 3) if scores else 0
 
-        # F1 score
+        f1 = 0.0
         if context_precision + context_recall > 0:
             f1 = round(2 * context_precision * context_recall / (context_precision + context_recall), 3)
-        else:
-            f1 = 0
 
-        # Latency percentiles
         sorted_lat = sorted(latencies)
         p50 = sorted_lat[len(sorted_lat) // 2] if sorted_lat else 0
         p95 = sorted_lat[int(len(sorted_lat) * 0.95)] if sorted_lat else 0
+
+        top_sources = sorted(
+            [{"source": k, "hits": v} for k, v in _stats.source_hits.items()],
+            key=lambda x: x["hits"], reverse=True
+        )[:10]
 
         return {
             "queries": {
@@ -114,6 +155,8 @@ def get_summary() -> dict:
                 "success_rate": round(success_rate, 3),
                 "pii_detected": _stats.pii_detected_count,
                 "pii_rate": round(_stats.pii_detected_count / total, 3) if total else 0,
+                "unique_sessions": len(_stats.unique_sessions),
+                "avg_response_chars": round(avg_resp_len),
             },
             "latency": {
                 "avg_ms": round(avg_latency, 1),
@@ -123,6 +166,7 @@ def get_summary() -> dict:
             "retrieval": {
                 "avg_chunks_per_query": round(avg_chunks, 1),
                 "avg_similarity_score": round(avg_score, 3),
+                "top_sources": top_sources,
             },
             "rag_quality": {
                 "context_precision": context_precision,
@@ -141,4 +185,5 @@ def get_summary() -> dict:
                 "upload_chunks": _stats.upload_chunks,
                 "total_chunks": _stats.chunks_stored + _stats.upload_chunks,
             },
+            "recent_queries": list(reversed(_stats.recent_queries)),
         }

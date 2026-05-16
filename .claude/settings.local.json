@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Ramkumar\\\\Desktop\\\\DT\\\\EnterpriseRag\" -Recurse -Depth 4 | Where-Object { $_.FullName -notmatch '\\\\.git' } | Select-Object FullName | Format-Table -AutoSize -Wrap)",
+      "Bash(pip install *)",
+      "Bash(\"C:\\\\Program Files\\\\Python311\\\\python.exe\" -m pip install -r requirements.txt)",
+      "Bash(\"C:\\\\Program Files\\\\Python311\\\\python.exe\" -m pip install cohere==5.5.8 qdrant-client==1.9.1)",
+      "Bash(\"C:\\\\Program Files\\\\Python311\\\\python.exe\" -m pip uninstall sentence-transformers chromadb -y)",
+      "Bash(\"C:\\\\Program Files\\\\Python311\\\\python.exe\" -m pip install langchain==0.3.19 langchain-community==0.3.19 langchain-groq==0.2.4 langgraph==0.2.73 langchain-core==0.3.51)",
+      "Bash(\"C:\\\\Program Files\\\\Python311\\\\python.exe\" -m pip uninstall langgraph-prebuilt langchain-classic -y)",
+      "Bash(\"C:\\\\Program Files\\\\Python311\\\\python.exe\" -m pip install --upgrade langchain langchain-community langchain-groq langgraph langchain-core)",
+      "Bash(git init *)",
+      "Bash(git remote *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(git commit -m 'fix: update Dockerfile — remove sentence-transformers, use en_core_web_sm *)",
+      "Bash(git commit -m 'fix: add railway.toml for Docker deployment from backend folder *)",
+      "Bash(git commit -m 'feat: add Metrics tab with RAG quality, latency, usage and ingestion stats *)",
+      "Bash(git commit -m 'feat: enhance metrics — top sources, recent queries, sessions, response length, Qdrant fix *)"
+    ]
+  }
+}

@@ -86,6 +86,7 @@ async def query_endpoint(
             query_total.labels(status="success").inc()
 
             docs = final_state.get("retrieved_docs", [])
+            sources = [d.get("metadata", {}).get("source", "") for d in docs if d.get("metadata", {}).get("source")]
             record_query(
                 success=True,
                 blocked=final_state.get("blocked", False),
@@ -93,6 +94,11 @@ async def query_endpoint(
                 pii_detected=final_state.get("pii_detected_input") or final_state.get("pii_detected_output"),
                 retrieval_scores=[d.get("score", 0) for d in docs],
                 chunks_retrieved=len(docs),
+                response_length=len(final_state.get("response", "")),
+                sources=sources,
+                session_id=body.session_id,
+                query_text=body.query,
+                rewritten_query=final_state.get("rewritten_query", ""),
             )
 
         except Exception as exc:

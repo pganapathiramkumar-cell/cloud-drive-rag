@@ -1,5 +1,13 @@
 import client from './client'
 
+export interface RecentQuery {
+  query: string
+  latency_ms: number
+  chunks: number
+  score: number
+  success: boolean
+}
+
 export interface MetricsSummary {
   queries: {
     total: number
@@ -9,6 +17,8 @@ export interface MetricsSummary {
     success_rate: number
     pii_detected: number
     pii_rate: number
+    unique_sessions: number
+    avg_response_chars: number
   }
   latency: {
     avg_ms: number
@@ -18,6 +28,7 @@ export interface MetricsSummary {
   retrieval: {
     avg_chunks_per_query: number
     avg_similarity_score: number
+    top_sources: { source: string; hits: number }[]
   }
   rag_quality: {
     context_precision: number
@@ -36,6 +47,7 @@ export interface MetricsSummary {
     qdrant_vectors: number | null
     qdrant_status: string
   }
+  recent_queries: RecentQuery[]
 }
 
 export async function fetchMetrics(): Promise<MetricsSummary> {
