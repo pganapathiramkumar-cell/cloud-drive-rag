@@ -1,9 +1,9 @@
-import { LogOut, Database } from 'lucide-react'
+import { LogOut, Database, BarChart2 } from 'lucide-react'
 import { getUserInfo, logout } from '../../auth/keycloak'
 
 interface Props {
-  activeTab: 'chat' | 'ingest'
-  onTabChange: (tab: 'chat' | 'ingest') => void
+  activeTab: 'chat' | 'ingest' | 'metrics'
+  onTabChange: (tab: 'chat' | 'ingest' | 'metrics') => void
 }
 
 export default function Header({ activeTab, onTabChange }: Props) {
@@ -38,6 +38,19 @@ export default function Header({ activeTab, onTabChange }: Props) {
             >
               <Database size={14} />
               Ingest
+            </button>
+          )}
+          {isAdmin && (
+            <button
+              onClick={() => onTabChange('metrics')}
+              className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-sm transition-colors ${
+                activeTab === 'metrics'
+                  ? 'bg-brand-600 text-white'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              <BarChart2 size={14} />
+              Metrics
             </button>
           )}
         </nav>

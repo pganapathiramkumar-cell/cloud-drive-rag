@@ -12,6 +12,7 @@ from app.pipeline.graph import rag_graph
 from app.pipeline.state import AgentState
 from app.services.memory import append_turn, get_history
 from app.observability.metrics import query_total, query_duration, active_sessions
+from app.services.metrics_tracker import record_query
 
 router = APIRouter()
 
@@ -80,11 +81,24 @@ async def query_endpoint(
             )
 
             elapsed = time.monotonic() - start
+            elapsed_ms = elapsed * 1000
             query_duration.observe(elapsed)
             query_total.labels(status="success").inc()
 
+            docs = final_state.get("retrieved_docs", [])
+            record_query(
+                success=True,
+                blocked=final_state.get("blocked", False),
+                latency_ms=elapsed_ms,
+                pii_detected=final_state.get("pii_detected_input") or final_state.get("pii_detected_output"),
+                retrieval_scores=[d.get("score", 0) for d in docs],
+                chunks_retrieved=len(docs),
+            )
+
         except Exception as exc:
             query_total.labels(status="error").inc()
+            record_query(success=False, blocked=False, latency_ms=0,
+                        pii_detected=False, retrieval_scores=[], chunks_retrieved=0)
             yield {"event": "error", "data": json.dumps({"detail": str(exc)})}
 
         finally:

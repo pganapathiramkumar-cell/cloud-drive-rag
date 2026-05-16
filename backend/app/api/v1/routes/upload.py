@@ -6,6 +6,7 @@ from app.services.doc_parser import extract_text
 from app.services.chunker import split
 from app.services.embedder import encode
 from app.services.vectorstore import add_chunks
+from app.services.metrics_tracker import record_upload
 
 router = APIRouter()
 
@@ -75,6 +76,8 @@ async def upload_file(
 
     embeddings = encode([c["text"] for c in chunks])
     stored = add_chunks(chunks, embeddings)
+
+    record_upload(stored)
 
     return {
         "status": "indexed",
