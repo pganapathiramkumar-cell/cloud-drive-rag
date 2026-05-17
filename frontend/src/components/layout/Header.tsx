@@ -6,13 +6,20 @@ interface Props {
   onTabChange: (tab: 'chat' | 'workflow' | 'ingest' | 'metrics' | 'analytics') => void
 }
 
-const TABS = [
+interface Tab {
+  id:         'chat' | 'workflow' | 'ingest' | 'metrics' | 'analytics'
+  label:      string
+  icon:       React.ReactNode
+  adminOnly?: boolean
+}
+
+const TABS: Tab[] = [
   { id: 'chat',      label: 'Chat',         icon: null                      },
   { id: 'workflow',  label: 'ChatWorkflow',  icon: <GitBranch size={13} />   },
   { id: 'ingest',    label: 'Ingest',        icon: <Database size={13} />,   adminOnly: true },
   { id: 'metrics',   label: 'Metrics',       icon: <BarChart2 size={13} />,  adminOnly: true },
   { id: 'analytics', label: 'Analytics',     icon: <Activity size={13} />,   adminOnly: true },
-] as const
+]
 
 export default function Header({ activeTab, onTabChange }: Props) {
   const user     = getUserInfo()
