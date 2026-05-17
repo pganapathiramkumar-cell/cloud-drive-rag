@@ -27,10 +27,11 @@ cohere==5.5.8
 qdrant-client==1.9.1
 
 # LLM + orchestration
-langchain==0.3.19
-langchain-community==0.3.19
-langchain-groq==0.2.4
-langgraph==0.2.73
+# langchain-community 0.3.19 requires langchain>=0.3.20 — use >= to let pip resolve
+langchain>=0.3.20,<0.4.0
+langchain-community>=0.3.19,<0.4.0
+langchain-groq>=0.2.4,<0.3.0
+langgraph>=0.2.73,<0.3.0
 
 # Session memory
 redis==5.0.6
