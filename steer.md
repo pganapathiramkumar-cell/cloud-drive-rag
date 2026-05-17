@@ -31,6 +31,9 @@
 | File Upload | python-multipart | 0.0.9 |
 | Async HTTP Client | httpx | 0.27.0 |
 | Container / Deploy | Docker + Railway | `python:3.11-slim` base |
+| Live URL | Railway | `https://cloud-drive-rag-production.up.railway.app` |
+| Internal Port | Railway-injected | `${PORT:-8000}` — currently Railway injects **8080** |
+| Public Networking Port | Railway dashboard | Must match Railway-injected PORT (currently 8080) |
 
 ### LLM & Orchestration
 | Component | Technology | Version |
@@ -121,8 +124,11 @@
 | PostCSS | postcss | 8.4.39 |
 | CSS Autoprefixer | autoprefixer | 10.4.19 |
 | Type Definitions | @types/react + @types/react-dom | 18.3.3 / 18.3.0 |
-| Design System | Custom `design-system.css` (CSS custom properties) | — |
+| Design System | Custom `design-system.css` (CSS custom properties + responsive) | — |
 | Font | Inter (Google Fonts) | 400/500/600/700/800 |
+| Live URL | Vercel | `https://cloud-rag.vercel.app` |
+| Backend API var | `VITE_API_URL` | `https://cloud-drive-rag-production.up.railway.app` (in `vercel.json`) |
+| Auth bypass var | `VITE_SKIP_AUTH` | `true` (in `vercel.json`) — skips Keycloak, returns `dev-token` |
 
 ---
 
@@ -399,26 +405,33 @@ returns: {filename, chunks_stored}
 ```
 src/
 ├── design-system.css          # Global design system — single source of truth
-│     20 sections: tokens, typography, layout, brand, nav, segmented control,
+│     23 sections: tokens, typography, layout, brand, nav, segmented control,
 │     user chip, cards, stat cards, buttons, forms, badges, progress bars,
-│     tables, alerts, empty states, drop zone, chat bubbles, utilities
+│     tables, alerts, empty states, drop zone, chat bubbles, workflow pipeline,
+│     utilities, responsive grid utilities, media queries (tablet + mobile)
 ├── main.tsx                   # React root — imports design-system.css
-├── App.tsx                    # Tab router: chat | ingest | metrics | analytics
+├── App.tsx                    # Tab router: chat | workflow | ingest | metrics | analytics
 ├── auth/AuthGuard.tsx         # Keycloak init wrapper, VITE_SKIP_AUTH bypass
 └── components/
-    ├── layout/Header.tsx       # Brand, tab nav (admin-gated), user chip, sign out
+    ├── layout/Header.tsx       # Brand + nav (flex-1) + user chip — responsive 2-row on mobile
     ├── chat/
-    │   ├── ChatWindow.tsx      # Message list, toolbar, empty state
-    │   ├── ChatInput.tsx       # Textarea, enter-to-send, loading spinner
-    │   ├── MessageBubble.tsx   # User/AI bubbles, PII tag, citations grid
+    │   ├── ChatWindow.tsx      # ds-chat-toolbar + ds-chat-messages layout classes
+    │   ├── ChatInput.tsx       # ds-chat-input-area layout class
+    │   ├── MessageBubble.tsx   # User/AI bubbles, PII tag, ds-grid-2 citations
     │   └── SourceCard.tsx      # Citation card with excerpt + URL
     ├── ingest/
-    │   ├── IngestPanel.tsx     # Three-tab: Upload | Google Drive | GCP Docs
+    │   ├── IngestPanel.tsx     # ds-grid-3/4 grids, ds-input-row for URL+button
     │   └── StatusBadge.tsx     # Ingestion status pill (idle/queued/running/done/error)
-    └── metrics/
-        ├── MetricsDashboard.tsx  # Ingestion, Query, Latency, Sources, RAG Quality
-        └── AnalyticsDashboard.tsx # Node latency, Token cost, Score distribution,
-                                   # Query categories, Session depth, Errors, Coverage
+    ├── metrics/
+    │   ├── MetricsDashboard.tsx   # ds-grid-4/3/2 + ds-page-actions
+    │   └── AnalyticsDashboard.tsx # ds-grid-4/3 + ds-page-actions
+    └── workflow/
+        ├── ChatWorkflowTab.tsx  # ds-workflow-split/left/right + ds-chat-toolbar + ds-workflow-query
+        ├── PipelineFlow.tsx     # LangGraph pipeline visualiser
+        ├── PipelineNode.tsx     # ds-wf-node states (running/completed/failed/pending)
+        ├── TraceHeader.tsx      # Trace ID, status, timing display
+        ├── MetricsSidebar.tsx   # Per-node span data, latency, metadata
+        └── NodeDetailDrawer.tsx # Expanded node detail panel
 ```
 
 ### Design System Standards
@@ -430,8 +443,42 @@ src/
 - **Radius**: 4–9999px via `--ds-r-xs` through `--ds-r-full`
 - **Shadows**: xs / sm / md / card / card-hover / header / btn / focus
 - **Component classes**: `ds-btn`, `ds-card`, `ds-stat-card`, `ds-input`, `ds-badge`, `ds-alert`, `ds-progress`, `ds-table`, `ds-nav-tab`, `ds-tab-btn`, `ds-spinner`
-- **Tabs**: `Chat` (all users), `Ingest / Metrics / Analytics` (admin role only)
-- **Auth**: Keycloak role `admin` gates admin tabs; `VITE_SKIP_AUTH=true` for local dev
+- **Tabs**: `Chat`, `ChatWorkflow` (all users), `Ingest / Metrics / Analytics` (admin role only)
+- **Auth**: Keycloak role `admin` gates admin tabs; `VITE_SKIP_AUTH=true` for local dev / Vercel
+
+### Responsive Design System (Sections 22–23)
+
+**Grid utility classes** — replace all inline `gridTemplateColumns` styles:
+| Class | Desktop | Tablet ≤1024px | Mobile ≤640px |
+|-------|---------|----------------|---------------|
+| `.ds-grid-4` | 4 columns | 2 columns | 2 columns |
+| `.ds-grid-3` | 3 columns | 3 columns | 2 columns |
+| `.ds-grid-2` | 2 columns | 2 columns | 1 column |
+
+**Layout utility classes**:
+| Class | Purpose |
+|-------|---------|
+| `.ds-page-actions` | Dashboard header row (title + refresh button) — wraps on mobile |
+| `.ds-input-row` | Input + button side-by-side — stacks vertically on mobile |
+| `.ds-chat-toolbar` | Chat/workflow toolbar bar with padding |
+| `.ds-chat-messages` | Chat messages scroll area |
+| `.ds-chat-input-area` | Chat input bar at bottom |
+| `.ds-workflow-query` | Workflow tab query input bar |
+| `.ds-workflow-split` | Workflow 60/40 split — stacks vertically on mobile |
+| `.ds-workflow-left` | Left panel (pipeline + answer) |
+| `.ds-workflow-right` | Right panel (metrics sidebar) |
+
+**Mobile breakpoint (≤640px)**:
+- Header: brand + user chip on row 1; nav scrollable on row 2 (hidden scrollbar)
+- User email hidden (`ds-user-email { display: none }`)
+- Container padding reduced to `var(--ds-s5) var(--ds-s4)`
+- Chat bubbles: `max-width: min(640px, 88%)`
+- Tables: `overflow-x: auto` for horizontal scroll
+- Tab bar: `overflow-x: auto`, buttons `flex: 0 0 auto` (no shrink)
+- Workflow split: `flex-direction: column` (stacked)
+- Cards: reduced padding
+
+**Rule**: Never use inline `style={{ display: 'grid', gridTemplateColumns: 'repeat(N, 1fr)' }}` — always use `.ds-grid-N` classes so responsive breakpoints apply automatically.
 
 ---
 
@@ -527,3 +574,42 @@ Planned (not yet live):
 - 📋 Langfuse LLM trace capture (target)
 - 📋 MLflow experiment logging (target)
 - Alert targets: p99 latency > 3s, error rate > 1%, LLM cost spike > 20% baseline
+
+---
+
+## Deployment Configuration (Live)
+
+### Railway (Backend)
+
+| Setting | Value |
+|---------|-------|
+| Service root | `backend/` |
+| Dockerfile | `backend/Dockerfile` |
+| Base image | `python:3.11-slim` |
+| App startup | `uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}` |
+| Actual runtime port | Railway-injected `PORT` (currently **8080**) |
+| Public networking port | Must match Railway-injected PORT (currently **8080**) |
+| Health endpoint | `GET /v1/health` — always returns 200 (ok or degraded) |
+| Startup time | ~5s (spaCy `en_core_web_sm` loads at lifespan) |
+| Build time | ~3–5 min (pip install + spaCy download) |
+
+**Critical Railway PORT rule**: Railway injects its own `PORT` env var and routes public traffic to that port. The CMD must use `${PORT:-8000}`. Never hardcode the port. Never add `healthcheckPath` to `railway.toml` unless the app port and Railway's PORT are confirmed to match — a mismatch causes the health check to fail and blocks the deployment from going live.
+
+**Required Railway env vars**: `GROQ_API_KEY`, `COHERE_API_KEY`, `QDRANT_URL`, `QDRANT_API_KEY`, `REDIS_URL`, `SKIP_AUTH=true`, `OTEL_ENABLED=false`, `GOOGLE_API_KEY`
+
+### Vercel (Frontend)
+
+| Setting | Value |
+|---------|-------|
+| Framework | Vite |
+| Root directory | `frontend/` |
+| Build command | `npm run build` |
+| Output directory | `dist` |
+| Config file | `frontend/vercel.json` |
+| Routing | SPA catch-all rewrite `/(.*) → /index.html` |
+| `VITE_API_URL` | `https://cloud-drive-rag-production.up.railway.app` (in `vercel.json`) |
+| `VITE_SKIP_AUTH` | `true` (in `vercel.json`) |
+
+**Vite env vars are baked at build time** — they must be present in `vercel.json` or Vercel dashboard before the build runs. Setting them in the dashboard requires a redeploy to take effect.
+
+**`VITE_SKIP_AUTH=true`** means `getToken()` returns `'dev-token'` and `getUserInfo()` returns `{roles:['admin','user']}`. The backend accepts `dev-token` when `SKIP_AUTH=true` is set.

@@ -433,7 +433,7 @@
 ## I. Frontend Skills (UI Layer)
 
 ### `design_system` ✅
-- **Technology**: CSS custom properties — `frontend/src/design-system.css` (698 lines)
+- **Technology**: CSS custom properties — `frontend/src/design-system.css`
 - **Loaded by**: `frontend/src/main.tsx` — imported after `index.css` (Tailwind base reset)
 - **Tailwind role**: `tailwindcss` **3.4.4** provides `@tailwind base` CSS reset (Preflight) only; all component styling is in `design-system.css`
 - **Token categories** (all `var(--ds-*)` prefixed):
@@ -450,19 +450,35 @@
   - Radius: `--ds-r-xs` 4px → `--ds-r-full` 9999px
   - Shadows: xs / sm / md / card / card-hover / header / btn / focus / input-focus
   - Transitions: `--ds-t-fast` 0.15s · `--ds-t` 0.20s · `--ds-t-slow` 0.30s
-- **Component classes** (20 sections): layout shells, brand mark, nav tabs, segmented control, user chip, cards (standard/sm/flush/accent), stat cards, buttons (primary/secondary/ghost/danger/danger-ghost × xs/sm/md/lg/xl), form inputs, badges (idle/queued/running/done/error/info/warning/success), progress bars (xs/sm/md/lg), tables, alerts (info/success/warning/error), empty state, drop zone, chat bubbles (user/AI + streaming cursor), spinner, utilities
+- **Component classes** (23 sections): layout shells, brand mark, nav tabs, segmented control, user chip, cards (standard/sm/flush/accent), stat cards, buttons (primary/secondary/ghost/danger/danger-ghost × xs/sm/md/lg/xl), form inputs, badges (idle/queued/running/done/error/info/warning/success), progress bars (xs/sm/md/lg), tables, alerts (info/success/warning/error), empty state, drop zone, chat bubbles (user/AI + streaming cursor), workflow pipeline nodes, utilities, **responsive grid utilities**, **media queries**
 - **Font**: Inter loaded via `<link>` in `index.html` — weights 400, 500, 600, 700, 800
+- **Responsive grid utilities** (Section 22):
+  - `.ds-grid-4` — `repeat(4,1fr)` → 2-col at ≤1024px → 2-col at ≤640px
+  - `.ds-grid-3` — `repeat(3,1fr)` → 3-col at ≤1024px → 2-col at ≤640px
+  - `.ds-grid-2` — `repeat(2,1fr)` → 1-col at ≤640px
+  - `.ds-page-actions` — space-between flex row, wraps on mobile
+  - `.ds-input-row` — flex row for input+button, stacks on mobile
+  - `.ds-chat-toolbar`, `.ds-chat-messages`, `.ds-chat-input-area` — chat layout shells
+  - `.ds-workflow-query`, `.ds-workflow-split`, `.ds-workflow-left`, `.ds-workflow-right` — workflow layout
+- **Media queries** (Section 23):
+  - Tablet `@media (max-width: 1024px)`: grid-4 → 2-col, workflow 55/45 split
+  - Mobile `@media (max-width: 640px)`: header wraps 2 rows, all grids collapse, reduced padding, workflow stacks vertically, tables scroll horizontally, tab bars scroll horizontally
+- **Rule**: Never write inline `style={{ gridTemplateColumns: 'repeat(N,1fr)' }}` — use `.ds-grid-N` so breakpoints apply
 
 ---
 
 ### `chat_interface` ✅
 - **Libraries**: `react` **18.3.1** · `axios` **1.7.2** · `lucide-react` **0.390.0** · `zustand` **4.5.2**
 - **Components**: `ChatWindow`, `ChatInput`, `MessageBubble`, `SourceCard`
+- **Layout classes**: `ds-chat-toolbar` (top bar) · `ds-chat-messages` (scroll area, flex-1) · `ds-chat-input-area` (bottom input bar)
+- **API**: `streamQuery()` in `src/api/query.ts` — uses `fetch` + `ReadableStream` for SSE, NOT axios; sends `Authorization: Bearer {token}` header
+- **API URL**: `const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'` — must have `VITE_API_URL` set on Vercel
+- **Auth token**: `getToken()` returns `'dev-token'` when `VITE_SKIP_AUTH=true`; backend accepts `dev-token` when `SKIP_AUTH=true`
 - **Features**:
   - Streaming cursor animation — CSS `@keyframes ds-blink` in `design-system.css`
-  - `ds-chat-bubble-user` (blue gradient) / `ds-chat-bubble-ai` (white bordered)
+  - `ds-chat-bubble-user` (blue gradient) / `ds-chat-bubble-ai` (white bordered) — `max-width: min(640px, 88%)`
   - PII warning tag (`ds-pii-tag`) on messages with redacted content
-  - Citation grid — 2-column `SourceCard` grid under AI responses
+  - Citation grid — `ds-grid-2` class (1-column on mobile) under AI responses
   - Enter-to-send, Shift+Enter for newline (textarea `onKeyDown`)
   - Auto-scroll via `useRef + scrollIntoView({ behavior: "smooth" })`
   - Clear chat with `ds-btn-danger-ghost`
@@ -524,8 +540,13 @@
 ### `header_nav` ✅
 - **Libraries**: `react` **18.3.1** · `lucide-react` **0.390.0** · `keycloak-js` **24.0.5**
 - **Component**: `src/components/layout/Header.tsx`
-- **Elements**: `ds-brand` (Bot icon + "Enterprise RAG" + "AI" tag) · `ds-nav` (tab buttons) · `ds-user-chip` (avatar + email + sign-out)
+- **Structure**: brand, nav, user-chip are **direct children** of `<header className="ds-page-header">` — no inner wrapper divs
+- **Desktop layout**: `[Brand] [Nav flex-1] [User Chip]` — all on one row; nav fills space between brand and user chip via `flex: 1`
+- **Mobile layout** (≤640px via CSS): row 1 = brand (order:1) + user chip (order:2, margin-left:auto); row 2 = nav (order:3, width:100%, overflow-x:auto, hidden scrollbar)
+- **Elements**: `ds-brand` (Bot icon + "Enterprise RAG" + "AI" tag) · `ds-nav` (tab buttons, `flex:1` on desktop) · `ds-user-chip` (avatar + email + sign-out)
 - **Tab gating**: `adminOnly` flag on Ingest/Metrics/Analytics tabs → hidden if `getUserInfo().roles` does not include `"admin"`
+- **Tabs**: Chat · ChatWorkflow (all users) · Ingest · Metrics · Analytics (admin only)
 - **Active tab**: `ds-active` class → `--ds-blue-600` background, white text, `--ds-shadow-btn`
 - **Avatar**: 2-letter initials from email, `ds-avatar` (blue gradient circle, 28 × 28 px)
-- **Sign-out**: calls `logout()` from `keycloak.ts` → Keycloak session termination
+- **Email**: hidden on mobile via `ds-user-email { display: none }` at ≤640px
+- **Sign-out**: calls `logout()` from `keycloak.ts` → Keycloak session termination; on `VITE_SKIP_AUTH=true` this is a no-op redirect
