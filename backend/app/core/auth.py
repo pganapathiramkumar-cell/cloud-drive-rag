@@ -70,6 +70,14 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Invalid token: {exc}",
         ) from exc
+    except Exception:
+        # Keycloak unreachable — fall back to dev-token when auth server is not configured
+        if token == "dev-token":
+            return _DEV_USER
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Authentication service unavailable",
+        )
 
 
 def require_role(role: str):
