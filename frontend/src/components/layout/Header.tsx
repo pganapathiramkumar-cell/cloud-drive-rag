@@ -1,24 +1,25 @@
-import { LogOut, Database, BarChart2, Activity, Bot, GitBranch } from 'lucide-react'
+import { LogOut, Database, BarChart2, Activity, Bot, GitBranch, FlaskConical } from 'lucide-react'
 import { getUserInfo, logout } from '../../auth/keycloak'
 
 interface Props {
-  activeTab: 'chat' | 'workflow' | 'ingest' | 'metrics' | 'analytics'
-  onTabChange: (tab: 'chat' | 'workflow' | 'ingest' | 'metrics' | 'analytics') => void
+  activeTab: 'chat' | 'workflow' | 'ingest' | 'metrics' | 'analytics' | 'tests'
+  onTabChange: (tab: 'chat' | 'workflow' | 'ingest' | 'metrics' | 'analytics' | 'tests') => void
 }
 
 interface Tab {
-  id:         'chat' | 'workflow' | 'ingest' | 'metrics' | 'analytics'
+  id:         'chat' | 'workflow' | 'ingest' | 'metrics' | 'analytics' | 'tests'
   label:      string
   icon:       React.ReactNode
   adminOnly?: boolean
 }
 
 const TABS: Tab[] = [
-  { id: 'chat',      label: 'Chat',         icon: null                      },
-  { id: 'workflow',  label: 'ChatWorkflow',  icon: <GitBranch size={13} />   },
-  { id: 'ingest',    label: 'Ingest',        icon: <Database size={13} />,   adminOnly: true },
-  { id: 'metrics',   label: 'Metrics',       icon: <BarChart2 size={13} />,  adminOnly: true },
-  { id: 'analytics', label: 'Analytics',     icon: <Activity size={13} />,   adminOnly: true },
+  { id: 'chat',      label: 'Chat',         icon: null                           },
+  { id: 'workflow',  label: 'ChatWorkflow',  icon: <GitBranch size={13} />        },
+  { id: 'ingest',    label: 'Ingest',        icon: <Database size={13} />,        adminOnly: true },
+  { id: 'metrics',   label: 'Metrics',       icon: <BarChart2 size={13} />,       adminOnly: true },
+  { id: 'analytics', label: 'Analytics',     icon: <Activity size={13} />,        adminOnly: true },
+  { id: 'tests',     label: 'Tests',         icon: <FlaskConical size={13} />,    adminOnly: true },
 ]
 
 export default function Header({ activeTab, onTabChange }: Props) {

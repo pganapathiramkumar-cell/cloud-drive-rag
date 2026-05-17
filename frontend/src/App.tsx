@@ -5,8 +5,9 @@ import IngestPanel from './components/ingest/IngestPanel'
 import MetricsDashboard from './components/metrics/MetricsDashboard'
 import AnalyticsDashboard from './components/metrics/AnalyticsDashboard'
 import ChatWorkflowTab from './components/workflow/ChatWorkflowTab'
+import TestsPanel from './components/tests/TestsPanel'
 
-type Tab = 'chat' | 'workflow' | 'ingest' | 'metrics' | 'analytics'
+type Tab = 'chat' | 'workflow' | 'ingest' | 'metrics' | 'analytics' | 'tests'
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('chat')
@@ -34,6 +35,12 @@ export default function App() {
         {activeTab === 'analytics' && (
           <div className="ds-scroll-area">
             <AnalyticsDashboard />
+          </div>
+        )}
+
+        {activeTab === 'tests' && (
+          <div className="ds-scroll-area">
+            <TestsPanel />
           </div>
         )}
       </main>
