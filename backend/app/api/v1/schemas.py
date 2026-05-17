@@ -36,9 +36,9 @@ class IngestStatus(BaseModel):
 
 
 class HealthResponse(BaseModel):
-    status: str
-    chromadb: str
-    redis: str
+    status:  str
+    qdrant:  str
+    redis:   str
     version: str = "1.0.0"
 
 

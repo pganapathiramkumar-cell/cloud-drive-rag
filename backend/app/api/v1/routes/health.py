@@ -1,21 +1,19 @@
 """GET /v1/health — liveness + dependency checks."""
 from fastapi import APIRouter
 
-from app.api.v1.schemas import HealthResponse
-
 router = APIRouter()
 
 
-@router.get("/health", response_model=HealthResponse)
+@router.get("/health")
 async def health():
-    chroma_status = "ok"
-    redis_status = "ok"
+    qdrant_status = "ok"
+    redis_status  = "ok"
 
     try:
-        from app.services.vectorstore import get_collection
-        get_collection().count()
+        from app.services.vectorstore import _get_client
+        _get_client().get_collections()
     except Exception:
-        chroma_status = "unavailable"
+        qdrant_status = "unavailable"
 
     try:
         from app.services.memory import _get_redis
@@ -23,10 +21,11 @@ async def health():
     except Exception:
         redis_status = "unavailable"
 
-    overall = "ok" if chroma_status == "ok" and redis_status == "ok" else "degraded"
+    overall = "ok" if qdrant_status == "ok" and redis_status == "ok" else "degraded"
 
-    return HealthResponse(
-        status=overall,
-        chromadb=chroma_status,
-        redis=redis_status,
-    )
+    return {
+        "status":  overall,
+        "qdrant":  qdrant_status,
+        "redis":   redis_status,
+        "version": "1.0.0",
+    }
