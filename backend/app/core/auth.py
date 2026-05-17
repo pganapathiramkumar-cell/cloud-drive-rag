@@ -12,9 +12,9 @@ security = HTTPBearer(auto_error=False)
 
 _DEV_USER = {"user_id": "dev-user", "email": "dev@localhost", "roles": ["admin", "user"]}
 
-# Read directly from os.environ — bypasses pydantic-settings cache/parsing issues
-_SKIP_AUTH = os.environ.get("SKIP_AUTH", "").lower() == "true" \
-          or os.environ.get("DEBUG", "").lower() == "true"
+def _skip_auth() -> bool:
+    """Checked per-request so env var changes take effect without restart."""
+    return os.environ.get("SKIP_AUTH", "").strip().lower() in ("true", "1", "yes")
 
 
 @lru_cache(maxsize=1)
@@ -43,8 +43,8 @@ async def _get_jwks() -> dict:
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> dict:
-    # Dev bypass: accept "dev-token" when SKIP_AUTH=true or DEBUG=true
-    if _SKIP_AUTH:
+    # Dev bypass — checked at request time so Railway env var takes effect immediately
+    if _skip_auth():
         if credentials is None or credentials.credentials == "dev-token":
             return _DEV_USER
 
