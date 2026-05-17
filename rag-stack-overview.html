@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>RAG Application Flow — React + Python Stack</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  @media print {
+    .page-break { page-break-before: always; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 9.5pt;
+    color: #111827;
+    line-height: 1.5;
+    background: #fff;
+  }
+
+  /* ── Header ── */
+  .doc-header {
+    border-bottom: 2.5px solid #2563EB;
+    padding-bottom: 8px;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .doc-title { font-size: 15pt; font-weight: 700; color: #1D4ED8; letter-spacing: -0.3px; }
+  .doc-sub   { font-size: 8pt;  color: #6B7280; margin-top: 2px; }
+  .doc-meta  { font-size: 7.5pt; color: #9CA3AF; text-align: right; }
+
+  /* ── Section headings ── */
+  h2 {
+    font-size: 9pt; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #2563EB;
+    border-left: 3px solid #2563EB; padding-left: 7px;
+    margin: 12px 0 6px;
+  }
+
+  /* ── 2-column layout ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+  /* ── Tables ── */
+  table { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+  th {
+    background: #EFF6FF; color: #1D4ED8;
+    font-weight: 700; text-align: left;
+    padding: 5px 8px; border-bottom: 1.5px solid #BFDBFE;
+    font-size: 7.5pt; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  td { padding: 4px 8px; border-bottom: 1px solid #F3F4F6; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background: #FAFBFC; }
+  .tbl-wrap {
+    border: 1px solid #E5E7EB; border-radius: 6px; overflow: hidden;
+    margin-bottom: 10px;
+  }
+
+  /* ── Pipeline flow ── */
+  .pipeline {
+    display: flex; flex-direction: column; gap: 0;
+    border: 1px solid #E5E7EB; border-radius: 6px; overflow: hidden;
+  }
+  .p-node {
+    display: grid; grid-template-columns: 22px 110px 1fr 80px;
+    align-items: center; gap: 8px;
+    padding: 5px 10px; border-bottom: 1px solid #F3F4F6;
+    font-size: 8.5pt;
+  }
+  .p-node:last-child { border-bottom: none; }
+  .p-num {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: #2563EB; color: #fff;
+    font-size: 7pt; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .p-name  { font-weight: 600; color: #111827; }
+  .p-desc  { color: #4B5563; }
+  .p-lib   { font-size: 7.5pt; color: #6B7280; font-style: italic; text-align: right; }
+  .p-node:nth-child(even) { background: #FAFBFC; }
+
+  /* ── Badge ── */
+  .badge {
+    display: inline-block; font-size: 7pt; font-weight: 600;
+    padding: 1px 7px; border-radius: 999px;
+    letter-spacing: 0.03em;
+  }
+  .badge-blue   { background: #DBEAFE; color: #1D4ED8; }
+  .badge-green  { background: #DCFCE7; color: #15803D; }
+  .badge-orange { background: #FFEDD5; color: #C2410C; }
+  .badge-purple { background: #F3E8FF; color: #7E22CE; }
+
+  /* ── Architecture box ── */
+  .arch-box {
+    background: #F8FAFC; border: 1px solid #E5E7EB;
+    border-radius: 6px; padding: 10px 12px;
+    font-size: 8pt; margin-bottom: 10px;
+  }
+  .arch-layer {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 3px;
+  }
+  .arch-arrow { color: #9CA3AF; font-size: 10pt; flex-shrink: 0; }
+  .arch-label {
+    background: #fff; border: 1px solid #E5E7EB; border-radius: 4px;
+    padding: 2px 8px; font-weight: 600; font-size: 7.5pt; color: #111827;
+    min-width: 120px; text-align: center;
+  }
+  .arch-tech { font-size: 7.5pt; color: #6B7280; }
+
+  /* ── Footer ── */
+  .doc-footer {
+    margin-top: 12px; padding-top: 6px;
+    border-top: 1px solid #E5E7EB;
+    font-size: 7pt; color: #9CA3AF;
+    display: flex; justify-content: space-between;
+  }
+
+  .section-box {
+    background: #F8FAFC; border: 1px solid #E5E7EB;
+    border-radius: 6px; padding: 8px 10px; margin-bottom: 10px;
+    font-size: 8pt;
+  }
+  .kv-row { display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px solid #EDF2F7; }
+  .kv-row:last-child { border-bottom: none; }
+  .kv-key { font-weight: 600; color: #374151; }
+  .kv-val { color: #6B7280; font-family: 'Courier New', monospace; font-size: 7.5pt; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE 1
+══════════════════════════════════════════════════ -->
+
+<div class="doc-header">
+  <div>
+    <div class="doc-title">RAG Application Flow</div>
+    <div class="doc-sub">React + Python Stack — Technology Reference</div>
+  </div>
+  <div class="doc-meta">
+    Stack Overview · Page 1 of 2<br>
+    Python 3.11 · React 18 · FastAPI · LangGraph
+  </div>
+</div>
+
+<!-- Architecture Overview -->
+<h2>System Architecture</h2>
+<div class="arch-box">
+  <div class="arch-layer">
+    <div class="arch-label">React Frontend</div>
+    <div class="arch-tech">Vite 5.3 · TypeScript 5.4 · Zustand · Axios · Keycloak-JS</div>
+  </div>
+  <div class="arch-layer" style="margin-left:20px">
+    <div class="arch-arrow">↓ HTTPS / SSE</div>
+  </div>
+  <div class="arch-layer">
+    <div class="arch-label">FastAPI Gateway</div>
+    <div class="arch-tech">FastAPI 0.111 · Uvicorn 0.29 · JWT Auth · Rate Limiting · CORS</div>
+  </div>
+  <div class="arch-layer" style="margin-left:20px">
+    <div class="arch-arrow">↓ Async Request</div>
+  </div>
+  <div class="arch-layer">
+    <div class="arch-label">LangGraph Pipeline</div>
+    <div class="arch-tech">LangGraph 0.2 · 6 Sequential Nodes · StateGraph · SSE Streaming</div>
+  </div>
+  <div class="arch-layer" style="margin-left:20px">
+    <div class="arch-arrow">↓ API Calls</div>
+  </div>
+  <div class="arch-layer">
+    <div class="arch-label">External Services</div>
+    <div class="arch-tech">Groq LLM · Cohere Embeddings · Qdrant Cloud · Redis · Google Drive API</div>
+  </div>
+</div>
+
+<!-- RAG Pipeline -->
+<h2>RAG Query Pipeline — 6-Node LangGraph Flow</h2>
+<div class="pipeline">
+  <div class="p-node">
+    <div class="p-num">1</div>
+    <div class="p-name">Query Rewriting</div>
+    <div class="p-desc">Resolves pronouns, removes ambiguity, produces a clean standalone query using LLM</div>
+    <div class="p-lib">langchain-groq 0.2.4<br>llama-3.3-70b</div>
+  </div>
+  <div class="p-node">
+    <div class="p-num">2</div>
+    <div class="p-name">PII Input Scan</div>
+    <div class="p-desc">Detects and redacts PII entities in the query; blocks pipeline if found</div>
+    <div class="p-lib">presidio-analyzer 2.2.354<br>spaCy 3.8.4</div>
+  </div>
+  <div class="p-node">
+    <div class="p-num">3</div>
+    <div class="p-name">Vector Retrieval</div>
+    <div class="p-desc">Embeds query to 1024-dim vector; cosine similarity search in Qdrant; returns top-5 chunks</div>
+    <div class="p-lib">cohere 5.5.8<br>qdrant-client 1.9.1</div>
+  </div>
+  <div class="p-node">
+    <div class="p-num">4</div>
+    <div class="p-name">Context Assembly</div>
+    <div class="p-desc">Formats retrieved chunks with source attribution; prepends Redis session history</div>
+    <div class="p-lib">langchain 0.3+<br>redis 5.0.6</div>
+  </div>
+  <div class="p-node">
+    <div class="p-num">5</div>
+    <div class="p-name">LLM Generation</div>
+    <div class="p-desc">Groq API generates grounded answer from context; tokens streamed via SSE</div>
+    <div class="p-lib">langchain-groq 0.2.4<br>sse-starlette 2.1.0</div>
+  </div>
+  <div class="p-node">
+    <div class="p-num">6</div>
+    <div class="p-name">PII Output Scan</div>
+    <div class="p-desc">Scrubs PII entities from LLM response before returning to client</div>
+    <div class="p-lib">presidio-anonymizer 2.2.354<br>spaCy en_core_web_sm</div>
+  </div>
+</div>
+
+<!-- Backend Stack Table -->
+<h2 style="margin-top:12px">Backend Stack — Python 3.11</h2>
+<div class="two-col">
+  <div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Library</th><th>Version</th><th>Role</th></tr></thead>
+        <tbody>
+          <tr><td>FastAPI</td><td>0.111.0</td><td>API framework</td></tr>
+          <tr><td>Uvicorn</td><td>0.29.0</td><td>ASGI server</td></tr>
+          <tr><td>LangChain</td><td>≥0.3.20</td><td>LLM chains</td></tr>
+          <tr><td>LangGraph</td><td>≥0.2.73</td><td>Pipeline orchestration</td></tr>
+          <tr><td>langchain-groq</td><td>≥0.2.4</td><td>Groq LLM client</td></tr>
+          <tr><td>cohere</td><td>5.5.8</td><td>Embeddings API</td></tr>
+          <tr><td>qdrant-client</td><td>1.9.1</td><td>Vector store</td></tr>
+          <tr><td>redis</td><td>5.0.6</td><td>Session memory</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Library</th><th>Version</th><th>Role</th></tr></thead>
+        <tbody>
+          <tr><td>presidio-analyzer</td><td>2.2.354</td><td>PII detection</td></tr>
+          <tr><td>presidio-anonymizer</td><td>2.2.354</td><td>PII redaction</td></tr>
+          <tr><td>spaCy</td><td>3.8.4</td><td>NLP engine (12 MB model)</td></tr>
+          <tr><td>PyMuPDF</td><td>1.24.5</td><td>PDF parsing</td></tr>
+          <tr><td>python-docx</td><td>1.1.2</td><td>DOCX parsing</td></tr>
+          <tr><td>opentelemetry-sdk</td><td>1.24.0</td><td>Distributed tracing</td></tr>
+          <tr><td>prometheus-client</td><td>0.20.0</td><td>Metrics export</td></tr>
+          <tr><td>pydantic-settings</td><td>≥2.4.0</td><td>Config management</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="doc-footer">
+  <span>RAG Application Flow — React + Python Stack</span>
+  <span>Page 1 of 2</span>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════
+     PAGE 2
+══════════════════════════════════════════════════ -->
+<div class="page-break"></div>
+
+<div class="doc-header">
+  <div>
+    <div class="doc-title">RAG Application Flow</div>
+    <div class="doc-sub">Frontend, Ingestion, Observability &amp; Deployment</div>
+  </div>
+  <div class="doc-meta">
+    Stack Overview · Page 2 of 2<br>
+    Python 3.11 · React 18 · FastAPI · LangGraph
+  </div>
+</div>
+
+<!-- Frontend Stack -->
+<h2>Frontend Stack — React + Vite + TypeScript</h2>
+<div class="two-col">
+  <div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Package</th><th>Version</th><th>Role</th></tr></thead>
+        <tbody>
+          <tr><td>react</td><td>18.3.1</td><td>UI framework</td></tr>
+          <tr><td>typescript</td><td>5.4.5</td><td>Type-safe language</td></tr>
+          <tr><td>vite</td><td>5.3.1</td><td>Build tool &amp; dev server</td></tr>
+          <tr><td>axios</td><td>1.7.2</td><td>HTTP client</td></tr>
+          <tr><td>zustand</td><td>4.5.2</td><td>State management</td></tr>
+          <tr><td>keycloak-js</td><td>24.0.5</td><td>Auth client</td></tr>
+          <tr><td>lucide-react</td><td>0.390.0</td><td>Icon library</td></tr>
+          <tr><td>tailwindcss</td><td>3.4.4</td><td>CSS base reset</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div>
+    <div class="section-box">
+      <div style="font-weight:700; color:#1D4ED8; margin-bottom:6px; font-size:8.5pt;">UI Tabs &amp; Features</div>
+      <div class="kv-row"><span class="kv-key">Chat</span><span class="kv-val">SSE streaming, citations, PII tags</span></div>
+      <div class="kv-row"><span class="kv-key">ChatWorkflow</span><span class="kv-val">Live pipeline observer, function traces</span></div>
+      <div class="kv-row"><span class="kv-key">Ingest</span><span class="kv-val">Upload, Google Drive, GCP Docs crawl</span></div>
+      <div class="kv-row"><span class="kv-key">Metrics</span><span class="kv-val">RAG quality, latency, top sources</span></div>
+      <div class="kv-row"><span class="kv-key">Analytics</span><span class="kv-val">Node timing, token cost, errors</span></div>
+      <div style="margin-top:8px; font-weight:700; color:#1D4ED8; margin-bottom:6px; font-size:8.5pt;">Design System</div>
+      <div class="kv-row"><span class="kv-key">Styling</span><span class="kv-val">design-system.css — 700-line CSS custom properties</span></div>
+      <div class="kv-row"><span class="kv-key">Font</span><span class="kv-val">Inter (Google Fonts) 400–800 weights</span></div>
+      <div class="kv-row"><span class="kv-key">Tokens</span><span class="kv-val">--ds-* color, spacing, shadow, radius</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Ingestion Pipelines -->
+<h2>Data Ingestion Pipelines</h2>
+<div class="three-col">
+  <div class="section-box">
+    <div style="font-weight:700;color:#1D4ED8;margin-bottom:5px;font-size:8pt;">📁 File Upload</div>
+    <div style="font-size:8pt;color:#374151;line-height:1.6">
+      Multipart upload → doc_parser<br>
+      → Presidio PII scrub<br>
+      → RecursiveCharacterTextSplitter<br>
+      (512 tokens, 64 overlap)<br>
+      → Cohere embed-english-v3.0<br>
+      → Qdrant upsert
+    </div>
+    <div style="margin-top:5px"><span class="badge badge-green">Formats: PDF · DOCX · PPTX · XLSX · TXT · CSV</span></div>
+  </div>
+  <div class="section-box">
+    <div style="font-weight:700;color:#1D4ED8;margin-bottom:5px;font-size:8pt;">☁️ Google Drive Sync</div>
+    <div style="font-size:8pt;color:#374151;line-height:1.6">
+      Drive API v3 folder list<br>
+      → Download files<br>
+      → doc_parser per format<br>
+      → Presidio PII scrub<br>
+      → Chunk → Embed → Store<br>
+      → Job status polling (2s)
+    </div>
+    <div style="margin-top:5px"><span class="badge badge-blue">google-api-python-client 2.134</span></div>
+  </div>
+  <div class="section-box">
+    <div style="font-weight:700;color:#1D4ED8;margin-bottom:5px;font-size:8pt;">🌐 GCP Docs Crawler</div>
+    <div style="font-size:8pt;color:#374151;line-height:1.6">
+      httpx async crawler<br>
+      → BeautifulSoup4 parse<br>
+      → Presidio PII scrub<br>
+      → Chunk → Embed → Store<br>
+      → Max 500 pages<br>
+      → 0.5s crawl delay
+    </div>
+    <div style="margin-top:5px"><span class="badge badge-orange">beautifulsoup4 4.12 · lxml 5.2</span></div>
+  </div>
+</div>
+
+<!-- Observability + Deployment -->
+<div class="two-col">
+  <div>
+    <h2>Observability</h2>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Component</th><th>Version</th><th>What it tracks</th></tr></thead>
+        <tbody>
+          <tr><td>OpenTelemetry SDK</td><td>1.24.0</td><td>Distributed traces, OTLP export</td></tr>
+          <tr><td>prometheus-client</td><td>0.20.0</td><td>Node duration, doc/chunk counters</td></tr>
+          <tr><td>metrics_tracker</td><td>in-process</td><td>Query stats, latency P50/P95, RAG quality</td></tr>
+          <tr><td>analytics_tracker</td><td>in-process</td><td>Node latency, token cost, score distribution</td></tr>
+          <tr><td>FastAPI Instrumentor</td><td>0.45b0</td><td>Auto-instrument all HTTP routes</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Security</h2>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Component</th><th>Version</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td>python-jose</td><td>3.3.0</td><td>Keycloak JWT RS256 validation</td></tr>
+          <tr><td>slowapi</td><td>0.1.9</td><td>Per-IP rate limiting</td></tr>
+          <tr><td>Presidio (dual)</td><td>2.2.354</td><td>PII on input + output</td></tr>
+          <tr><td>CORS middleware</td><td>FastAPI built-in</td><td>Origin control</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div>
+    <h2>Deployment</h2>
+    <div class="section-box">
+      <div class="kv-row"><span class="kv-key">Backend host</span><span class="kv-val">Railway (Docker, python:3.11-slim)</span></div>
+      <div class="kv-row"><span class="kv-key">Frontend host</span><span class="kv-val">Vercel (Vite static build)</span></div>
+      <div class="kv-row"><span class="kv-key">Vector DB</span><span class="kv-val">Qdrant Cloud (cosine, 1024-dim)</span></div>
+      <div class="kv-row"><span class="kv-key">LLM</span><span class="kv-val">Groq API — llama-3.3-70b-versatile</span></div>
+      <div class="kv-row"><span class="kv-key">Embeddings</span><span class="kv-val">Cohere embed-english-v3.0</span></div>
+      <div class="kv-row"><span class="kv-key">Session store</span><span class="kv-val">Redis (Upstash-compatible)</span></div>
+      <div class="kv-row"><span class="kv-key">Container RAM</span><span class="kv-val">~320 MB idle · 500 MB peak</span></div>
+      <div class="kv-row"><span class="kv-key">Docker image</span><span class="kv-val">~406 MB (spaCy model included)</span></div>
+      <div class="kv-row"><span class="kv-key">Python version</span><span class="kv-val">3.11 (slim)</span></div>
+      <div class="kv-row"><span class="kv-key">Node.js version</span><span class="kv-val">24.x (Vercel)</span></div>
+      <div class="kv-row"><span class="kv-key">Source repo</span><span class="kv-val">GitHub — auto-deploy on main push</span></div>
+    </div>
+
+    <h2>API Endpoints</h2>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge badge-green">GET</span></td><td>/v1/health</td><td>Liveness + Qdrant + Redis check</td></tr>
+          <tr><td><span class="badge badge-blue">POST</span></td><td>/v1/query</td><td>RAG query — SSE token stream</td></tr>
+          <tr><td><span class="badge badge-blue">POST</span></td><td>/v1/workflow/query</td><td>RAG query + pipeline stage events</td></tr>
+          <tr><td><span class="badge badge-blue">POST</span></td><td>/v1/upload</td><td>File upload → index</td></tr>
+          <tr><td><span class="badge badge-blue">POST</span></td><td>/v1/drive/sync</td><td>Google Drive folder → index</td></tr>
+          <tr><td><span class="badge badge-green">GET</span></td><td>/v1/metrics</td><td>Query + RAG quality stats</td></tr>
+          <tr><td><span class="badge badge-green">GET</span></td><td>/v1/analytics</td><td>Node latency + token cost</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="doc-footer">
+  <span>RAG Application Flow — React + Python Stack</span>
+  <span>Page 2 of 2</span>
+</div>
+
+</body>
+</html>

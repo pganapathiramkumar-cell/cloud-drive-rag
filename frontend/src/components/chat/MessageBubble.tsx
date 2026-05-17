@@ -60,7 +60,7 @@ export default function MessageBubble({ message }: Props) {
           }}>
             Sources
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+          <div className="ds-grid-2" style={{ gap: 8 }}>
             {message.citations.map(c => (
               <SourceCard key={c.index} citation={c} />
             ))}

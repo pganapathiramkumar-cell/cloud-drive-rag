@@ -129,6 +129,7 @@ body {
   line-height: var(--ds-lh);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 /* Prettier scrollbars */
@@ -187,9 +188,10 @@ body {
   border-bottom: 1px solid var(--ds-border);
   box-shadow: 0 1px 0 var(--ds-border), 0 2px 8px rgba(0,0,0,0.03);
   position: sticky; top: 0; z-index: 100;
-  height: 58px;
+  min-height: 58px;
   display: flex; align-items: center;
   padding: 0 var(--ds-s8);
+  gap: 28px;
 }
 
 .ds-main { flex: 1; overflow: hidden; background: var(--ds-bg-3); }
@@ -226,7 +228,7 @@ body {
    ───────────────────────────────────────────────────────────── */
 .ds-brand {
   display: flex; align-items: center; gap: var(--ds-s2);
-  text-decoration: none; user-select: none;
+  text-decoration: none; user-select: none; flex-shrink: 0;
 }
 .ds-brand-logo {
   width: 30px; height: 30px; border-radius: var(--ds-r-md);
@@ -251,7 +253,7 @@ body {
 /* ─────────────────────────────────────────────────────────────
    6. NAVIGATION TABS (header)
    ───────────────────────────────────────────────────────────── */
-.ds-nav { display: flex; align-items: center; gap: 2px; }
+.ds-nav { display: flex; align-items: center; gap: 2px; flex: 1; }
 
 .ds-nav-tab {
   display: inline-flex; align-items: center; gap: 6px;
@@ -301,7 +303,7 @@ body {
    8. USER CHIP
    ───────────────────────────────────────────────────────────── */
 .ds-user-chip {
-  display: flex; align-items: center; gap: var(--ds-s2);
+  display: flex; align-items: center; gap: var(--ds-s2); flex-shrink: 0;
 }
 .ds-avatar {
   width: 28px; height: 28px; border-radius: var(--ds-r-full);
@@ -546,7 +548,7 @@ body {
   border: 1px solid var(--ds-border);
   border-radius: var(--ds-r-xl);
   box-shadow: var(--ds-shadow-card);
-  overflow: hidden;
+  overflow-x: auto; overflow-y: hidden;
 }
 .ds-table { width: 100%; border-collapse: collapse; }
 
@@ -630,7 +632,7 @@ body {
   color: var(--ds-text-inv);
   border-radius: 18px 18px 4px 18px;
   padding: 12px 18px;
-  max-width: 640px;
+  max-width: min(640px, 88%);
   line-height: 1.65;
   font-size: 15px;
   box-shadow: 0 2px 10px rgba(37,99,235,0.25);
@@ -641,7 +643,7 @@ body {
   border: 1px solid var(--ds-border);
   border-radius: 18px 18px 18px 4px;
   padding: 12px 18px;
-  max-width: 640px;
+  max-width: min(640px, 88%);
   line-height: 1.65;
   font-size: 15px;
   box-shadow: var(--ds-shadow-sm);
@@ -759,4 +761,172 @@ body {
   0%   { transform: translateX(0); width: 30%; }
   50%  { transform: translateX(200%); width: 50%; }
   100% { transform: translateX(300%); width: 30%; }
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   22. RESPONSIVE GRID UTILITIES
+   ───────────────────────────────────────────────────────────── */
+.ds-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.ds-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.ds-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+
+/* Page header actions row (title + refresh button) */
+.ds-page-actions {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; flex-wrap: wrap; gap: var(--ds-s3);
+}
+
+/* Input + button row (e.g. Drive URL field + Sync button) */
+.ds-input-row { display: flex; gap: 10px; align-items: center; }
+
+/* Chat layout shells */
+.ds-chat-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--ds-divider);
+  background: var(--ds-bg);
+  flex-shrink: 0; flex-wrap: wrap; gap: 6px;
+}
+.ds-chat-messages {
+  flex: 1; overflow-y: auto;
+  padding: 28px 24px;
+  display: flex; flex-direction: column; gap: 20px;
+  background: var(--ds-bg-3);
+}
+.ds-chat-input-area {
+  border-top: 1px solid var(--ds-divider);
+  background: var(--ds-bg);
+  padding: 16px 24px 20px;
+  flex-shrink: 0;
+}
+
+/* Workflow query input bar */
+.ds-workflow-query {
+  padding: 12px 24px;
+  background: var(--ds-bg);
+  border-bottom: 1px solid var(--ds-divider);
+  flex-shrink: 0;
+}
+
+/* Workflow pipeline / sidebar split */
+.ds-workflow-split {
+  flex: 1; overflow: hidden; display: flex;
+}
+.ds-workflow-left {
+  flex: 0 0 60%; overflow-y: auto;
+  padding: 20px 20px 20px 24px;
+  border-right: 1px solid var(--ds-divider);
+}
+.ds-workflow-right {
+  flex: 0 0 40%; overflow-y: auto;
+  padding: 20px 24px 20px 20px;
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   23. RESPONSIVE BREAKPOINTS
+   ───────────────────────────────────────────────────────────── */
+
+/* Tablet: 641px – 1024px */
+@media (max-width: 1024px) {
+  .ds-grid-4 { grid-template-columns: repeat(2, 1fr); }
+
+  .ds-workflow-left  { flex: 0 0 55%; }
+  .ds-workflow-right { flex: 0 0 45%; }
+}
+
+/* Mobile: ≤ 640px */
+@media (max-width: 640px) {
+
+  /* ── Header ── */
+  .ds-page-header {
+    min-height: auto;
+    padding: var(--ds-s3) var(--ds-s4);
+    gap: var(--ds-s2);
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .ds-brand    { order: 1; }
+  .ds-user-chip { order: 2; margin-left: auto; }
+  .ds-user-email { display: none; }
+
+  /* Nav goes to its own scrollable row */
+  .ds-nav {
+    order: 3;
+    flex: none;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .ds-nav::-webkit-scrollbar { display: none; }
+  .ds-nav-tab { font-size: 12px; padding: 5px 10px; }
+
+  /* ── Layout containers ── */
+  .ds-container,
+  .ds-container-md { padding: var(--ds-s5) var(--ds-s4); }
+
+  /* ── Grids collapse ── */
+  .ds-grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .ds-grid-3 { grid-template-columns: repeat(2, 1fr); }
+  .ds-grid-2 { grid-template-columns: 1fr; }
+
+  /* ── Typography ── */
+  .ds-h1 { font-size: 24px; }
+  .ds-h2 { font-size: 20px; }
+  .ds-h3 { font-size: 18px; }
+  .ds-page-title { font-size: 16px; }
+  .ds-stat-value { font-size: 22px; }
+
+  /* ── Chat ── */
+  .ds-chat-toolbar  { padding: 8px 16px; }
+  .ds-chat-messages { padding: 16px 12px; gap: 14px; }
+  .ds-chat-input-area { padding: 12px 16px 16px; }
+  .ds-chat-bubble-user,
+  .ds-chat-bubble-ai { font-size: 14px; padding: 10px 14px; }
+
+  /* ── Workflow ── */
+  .ds-workflow-query { padding: 10px 16px; }
+  .ds-workflow-split {
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .ds-workflow-left {
+    flex: none;
+    border-right: none;
+    border-bottom: 1px solid var(--ds-divider);
+    padding: 16px;
+    overflow: visible;
+  }
+  .ds-workflow-right {
+    flex: none;
+    padding: 16px;
+  }
+
+  /* ── Tables ── */
+  .ds-table-wrap { border-radius: var(--ds-r-lg); }
+  .ds-table th,
+  .ds-table td { padding: 8px 12px; font-size: 12px; }
+
+  /* ── Tab bar ── */
+  .ds-tab-bar { overflow-x: auto; padding-bottom: 1px; scrollbar-width: none; }
+  .ds-tab-bar::-webkit-scrollbar { display: none; }
+  .ds-tab-btn { flex: 0 0 auto; font-size: 12px; padding: 7px 12px; }
+
+  /* ── Cards ── */
+  .ds-card    { padding: var(--ds-s4); }
+  .ds-card-sm { padding: var(--ds-s3) var(--ds-s4); }
+
+  /* ── Empty state ── */
+  .ds-empty { padding: var(--ds-s10) var(--ds-s4); }
+
+  /* ── Drop zone ── */
+  .ds-dropzone { padding: var(--ds-s8) var(--ds-s4); }
+
+  /* ── Input row stacks vertically ── */
+  .ds-input-row { flex-direction: column; align-items: stretch; }
+  .ds-input-row .ds-btn { width: 100%; justify-content: center; }
 }

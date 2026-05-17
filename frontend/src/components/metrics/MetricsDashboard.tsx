@@ -127,7 +127,7 @@ export default function MetricsDashboard() {
     <div className="ds-container">
 
       {/* Page header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32 }}>
+      <div className="ds-page-actions" style={{ marginBottom: 32 }}>
         <div>
           <h1 className="ds-page-title" style={{ marginBottom: 4 }}>App Metrics</h1>
           <p style={{ fontSize: 13, color: 'var(--ds-text-3)' }}>
@@ -146,13 +146,13 @@ export default function MetricsDashboard() {
         {/* ── Documents & Indexing ── */}
         <Section title="Documents & Indexing" iconBg="var(--ds-blue-50)"
           icon={<Database size={13} color="var(--ds-blue-600)" />}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 12 }}>
+          <div className="ds-grid-4" style={{ marginBottom: 12 }}>
             <StatCard label="Vectors in Qdrant"  value={data.ingestion.qdrant_vectors ?? '—'} sub={data.ingestion.qdrant_status} color="blue" />
             <StatCard label="Total Chunks"        value={data.ingestion.total_chunks}           sub="across all sources"           color="blue" />
             <StatCard label="Files Indexed"       value={data.ingestion.files_indexed + data.ingestion.uploads_indexed} sub="Drive + uploads" color="green" />
             <StatCard label="Files Skipped"       value={data.ingestion.files_skipped}          sub="unreadable files"             color="orange" />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="ds-grid-2">
             <MiniStat label="Drive sync chunks" value={data.ingestion.chunks_stored} />
             <MiniStat label="Upload chunks"     value={data.ingestion.upload_chunks} />
           </div>
@@ -161,13 +161,13 @@ export default function MetricsDashboard() {
         {/* ── Query Usage ── */}
         <Section title="Query Usage" iconBg="var(--ds-blue-50)"
           icon={<MessageSquare size={13} color="var(--ds-blue-600)" />}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 12 }}>
+          <div className="ds-grid-4" style={{ marginBottom: 12 }}>
             <StatCard label="Total Queries"  value={data.queries.total}      sub="since last restart"  color="blue" />
             <StatCard label="Successful"     value={data.queries.successful}  sub={pct(data.queries.success_rate)} color="green" />
             <StatCard label="Failed"         value={data.queries.failed}      sub="errors"              color="red" />
             <StatCard label="Blocked"        value={data.queries.blocked}     sub="PII / guardrails"    color="orange" />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+          <div className="ds-grid-4">
             <MiniStat label="Unique sessions"    value={data.queries.unique_sessions} />
             <MiniStat label="PII detected"       value={`${data.queries.pii_detected} (${pct(data.queries.pii_rate)})`} />
             <MiniStat label="Avg response"       value={`${data.queries.avg_response_chars} chars`} />
@@ -178,12 +178,12 @@ export default function MetricsDashboard() {
         {/* ── Latency ── */}
         <Section title="Latency" iconBg="var(--ds-green-100)"
           icon={<Zap size={13} color="var(--ds-green-600)" />}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 12 }}>
+          <div className="ds-grid-3" style={{ marginBottom: 12 }}>
             <StatCard label="Avg Response" value={`${data.latency.avg_ms.toFixed(0)} ms`} sub="end-to-end"      color="blue" />
             <StatCard label="P50 Median"   value={`${data.latency.p50_ms.toFixed(0)} ms`} sub="50th percentile" color="green" />
             <StatCard label="P95"          value={`${data.latency.p95_ms.toFixed(0)} ms`} sub="95th percentile" color="orange" />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="ds-grid-2">
             <MiniStat label="Avg chunks retrieved"  value={data.retrieval.avg_chunks_per_query.toFixed(1)} />
             <MiniStat label="Avg similarity score"  value={data.retrieval.avg_similarity_score.toFixed(3)} />
           </div>
@@ -275,7 +275,7 @@ export default function MetricsDashboard() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
+          <div className="ds-grid-3" style={{ marginBottom: 16 }}>
             <QualityCard label="Context Precision" value={data.rag_quality.context_precision} good={0.7}
               description="Avg relevance score of retrieved chunks" />
             <QualityCard label="Context Recall"    value={data.rag_quality.context_recall}    good={0.7}

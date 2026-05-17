@@ -56,7 +56,7 @@ export default function AnalyticsDashboard() {
     <div className="ds-container">
 
       {/* Page header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32 }}>
+      <div className="ds-page-actions" style={{ marginBottom: 32 }}>
         <div>
           <h1 className="ds-page-title" style={{ marginBottom: 4 }}>Deep Analytics</h1>
           <p style={{ fontSize: 13, color: 'var(--ds-text-3)' }}>
@@ -114,7 +114,7 @@ export default function AnalyticsDashboard() {
         <Section title="Token Usage & Cost Estimate"
           icon={<Coins size={13} color="var(--ds-blue-600)" />}
           iconBg="var(--ds-blue-50)">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 12 }}>
+          <div className="ds-grid-4" style={{ marginBottom: 12 }}>
             <StatCard label="Total Tokens"  value={data.tokens.total.toLocaleString()}        sub="Groq LLM"            color="blue" />
             <StatCard label="Input Tokens"  value={data.tokens.total_input.toLocaleString()}   sub="prompt + context"   color="blue" />
             <StatCard label="Output Tokens" value={data.tokens.total_output.toLocaleString()}  sub="generated response" color="green" />
@@ -124,7 +124,7 @@ export default function AnalyticsDashboard() {
             <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--ds-text-2)', marginBottom: 16 }}>
               Estimated Cost (USD)
             </p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+            <div className="ds-grid-4">
               <CostStat label="Groq Input"   value={data.tokens.cost_usd.groq_input}   rate="$0.59 / 1M tokens" />
               <CostStat label="Groq Output"  value={data.tokens.cost_usd.groq_output}  rate="$0.79 / 1M tokens" />
               <CostStat label="Cohere Embed" value={data.tokens.cost_usd.cohere_embed} rate="$0.10 / 1M tokens" />
@@ -173,7 +173,7 @@ export default function AnalyticsDashboard() {
         <Section title="Query Categories"
           icon={<Tag size={13} color="var(--ds-blue-600)" />}
           iconBg="var(--ds-blue-50)">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+          <div className="ds-grid-3">
             <CategoryCard label="On-Topic"   value={data.query_categories.on_topic}
               total={data.query_categories.total} fillClass="ds-fill-green"
               valueColor="var(--ds-green-600)"  description="Avg score ≥ 0.45" />
@@ -190,7 +190,7 @@ export default function AnalyticsDashboard() {
         <Section title="Session Depth"
           icon={<Users size={13} color="var(--ds-green-600)" />}
           iconBg="var(--ds-green-100)">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+          <div className="ds-grid-4">
             <StatCard label="Total Sessions" value={data.sessions.total}      sub="unique users"       color="blue" />
             <StatCard label="Avg Turns"      value={data.sessions.avg_turns}  sub="per session"        color="green" />
             <StatCard label="Max Turns"      value={data.sessions.max_turns}  sub="longest session"    color="orange" />
@@ -209,7 +209,7 @@ export default function AnalyticsDashboard() {
                 No errors recorded this session ✓
               </p>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+              <div className="ds-grid-4">
                 <ErrorStat label="Rate Limit" value={data.errors.rate_limit}      desc="Cohere 429" />
                 <ErrorStat label="LLM Error"  value={data.errors.llm_error}       desc="Groq failures" />
                 <ErrorStat label="Retrieval"  value={data.errors.retrieval_error} desc="Qdrant errors" />
@@ -224,7 +224,7 @@ export default function AnalyticsDashboard() {
           icon={<Database size={13} color="var(--ds-blue-600)" />}
           iconBg="var(--ds-blue-50)">
           <div className="ds-card" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+            <div className="ds-grid-3">
               <StatCard label="Total Vectors"     value={data.index_coverage.qdrant_total_vectors.toLocaleString()} sub="in Qdrant"            color="blue" />
               <StatCard label="Sources Retrieved" value={data.index_coverage.unique_sources_retrieved}              sub="unique files used"    color="green" />
               <StatCard label="Coverage Rate"     value={`${(data.index_coverage.coverage_rate * 100).toFixed(1)}%`} sub="files ever retrieved" color="orange" />

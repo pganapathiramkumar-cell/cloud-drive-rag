@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Cloud Drive RAG — Architecture Explained</title>
+<style>
+/* ── Print setup ─────────────────────────── */
+@page { size: A4 portrait; margin: 14mm 14mm 12mm 14mm; }
+@media print {
+  .page-break { page-break-before: always; }
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 9pt; color: #111827; line-height: 1.55;
+  background: #fff;
+}
+
+/* ── Page header ─────────────────────────── */
+.page-header {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  padding-bottom: 8px; margin-bottom: 12px;
+  border-bottom: 3px solid #2563EB;
+}
+.ph-title { font-size: 16pt; font-weight: 800; color: #1D4ED8; letter-spacing: -0.4px; }
+.ph-sub   { font-size: 8pt; color: #6B7280; margin-top: 2px; }
+.ph-badge {
+  background: #EFF6FF; border: 1px solid #BFDBFE;
+  border-radius: 20px; padding: 3px 12px;
+  font-size: 7.5pt; font-weight: 700; color: #1D4ED8;
+}
+
+/* ── Section headings ────────────────────── */
+.section-title {
+  font-size: 8.5pt; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.1em; color: #fff;
+  background: #2563EB; padding: 4px 10px;
+  border-radius: 4px; margin: 10px 0 7px;
+  display: inline-block;
+}
+.section-title.green  { background: #16A34A; }
+.section-title.orange { background: #EA580C; }
+.section-title.purple { background: #7C3AED; }
+.section-title.slate  { background: #475569; }
+.section-title.teal   { background: #0891B2; }
+
+/* ── Simple answer box ───────────────────── */
+.answer-box {
+  background: linear-gradient(135deg, #EFF6FF 0%, #F0FDF4 100%);
+  border: 1.5px solid #BFDBFE; border-radius: 8px;
+  padding: 10px 14px; margin-bottom: 10px; font-size: 8.5pt;
+}
+.answer-box p { margin-bottom: 4px; }
+.answer-box strong { color: #1D4ED8; }
+
+/* ── Big flow ────────────────────────────── */
+.big-flow {
+  display: flex; flex-direction: column; gap: 0;
+  border: 1.5px solid #E5E7EB; border-radius: 8px; overflow: hidden;
+  margin-bottom: 10px;
+}
+.flow-step {
+  display: grid;
+  grid-template-columns: 28px 28px 120px 1fr 90px;
+  align-items: center; gap: 8px;
+  padding: 6px 10px; border-bottom: 1px solid #F3F4F6;
+}
+.flow-step:last-child { border-bottom: none; }
+.flow-step:nth-child(even) { background: #FAFBFC; }
+.step-num {
+  width: 22px; height: 22px; border-radius: 50%;
+  font-size: 8pt; font-weight: 800; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.step-icon { font-size: 14pt; text-align: center; }
+.step-name { font-weight: 700; color: #111827; font-size: 8.5pt; }
+.step-desc { font-size: 8pt; color: #4B5563; line-height: 1.5; }
+.step-tech { font-size: 7pt; color: #6B7280; text-align: right; line-height: 1.5; font-style: italic; }
+
+/* ── Layer diagram ───────────────────────── */
+.layer-stack { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.layer {
+  border-radius: 6px; padding: 6px 12px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.layer-name { font-weight: 700; font-size: 8.5pt; }
+.layer-tech { font-size: 7.5pt; opacity: 0.9; }
+.layer-arr  { text-align: center; font-size: 9pt; color: #9CA3AF; margin: -1px 0; }
+
+/* ── Tech cards grid ─────────────────────── */
+.tech-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+.tech-card {
+  border: 1px solid #E5E7EB; border-radius: 7px; padding: 8px 10px;
+  background: #fff;
+}
+.tc-icon    { font-size: 16pt; margin-bottom: 3px; }
+.tc-name    { font-weight: 700; font-size: 8.5pt; color: #111827; }
+.tc-version { font-size: 7pt; color: #6B7280; font-family: 'Courier New', monospace; margin: 1px 0 3px; }
+.tc-desc    { font-size: 7.5pt; color: #4B5563; line-height: 1.45; }
+
+/* ── Two column ──────────────────────────── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+/* ── Mini table ──────────────────────────── */
+.mini-table { width: 100%; border-collapse: collapse; font-size: 8pt; margin-bottom: 8px; }
+.mini-table th {
+  background: #F3F4F6; color: #374151;
+  padding: 4px 8px; text-align: left;
+  font-size: 7.5pt; font-weight: 700; border-bottom: 1.5px solid #E5E7EB;
+}
+.mini-table td { padding: 4px 8px; border-bottom: 1px solid #F3F4F6; }
+.mini-table tr:last-child td { border-bottom: none; }
+.mini-table tr:nth-child(even) td { background: #FAFBFC; }
+
+/* ── Metric cards ────────────────────────── */
+.metric-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-bottom: 10px; }
+.metric-card {
+  border-radius: 7px; padding: 8px 8px 6px;
+  text-align: center; border: 1px solid transparent;
+}
+.mc-val  { font-size: 14pt; font-weight: 800; line-height: 1.1; }
+.mc-lbl  { font-size: 7pt; font-weight: 600; margin-top: 2px; }
+.mc-sub  { font-size: 6.5pt; color: #6B7280; margin-top: 1px; }
+.mc-blue   { background: #EFF6FF; border-color: #BFDBFE; }
+.mc-blue .mc-val { color: #1D4ED8; }
+.mc-green  { background: #F0FDF4; border-color: #BBF7D0; }
+.mc-green .mc-val { color: #15803D; }
+.mc-orange { background: #FFF7ED; border-color: #FED7AA; }
+.mc-orange .mc-val { color: #C2410C; }
+.mc-purple { background: #FAF5FF; border-color: #E9D5FF; }
+.mc-purple .mc-val { color: #7C3AED; }
+
+/* ── Info box ────────────────────────────── */
+.info-box {
+  border-radius: 7px; padding: 8px 11px; margin-bottom: 8px;
+  font-size: 8pt; line-height: 1.55;
+}
+.info-box.blue   { background: #EFF6FF; border: 1px solid #BFDBFE; color: #1E40AF; }
+.info-box.green  { background: #F0FDF4; border: 1px solid #BBF7D0; color: #14532D; }
+.info-box.orange { background: #FFF7ED; border: 1px solid #FED7AA; color: #7C2D12; }
+.info-box strong { font-weight: 700; }
+
+/* ── Inline badge ────────────────────────── */
+.tag {
+  display: inline-block; font-size: 7pt; font-weight: 600;
+  padding: 1px 7px; border-radius: 999px; margin: 1px 2px;
+}
+.tag-b  { background: #DBEAFE; color: #1D4ED8; }
+.tag-g  { background: #DCFCE7; color: #166534; }
+.tag-o  { background: #FFEDD5; color: #9A3412; }
+.tag-p  { background: #F3E8FF; color: #6B21A8; }
+.tag-s  { background: #F1F5F9; color: #475569; }
+
+/* ── Step connector ──────────────────────── */
+.step-arrow { text-align: center; color: #93C5FD; font-size: 11pt; line-height: 1; }
+
+/* ── Footer ──────────────────────────────── */
+.page-footer {
+  margin-top: 10px; padding-top: 6px;
+  border-top: 1px solid #E5E7EB;
+  display: flex; justify-content: space-between;
+  font-size: 7pt; color: #9CA3AF;
+}
+
+/* ── Horizontal pipeline ─────────────────── */
+.h-pipeline {
+  display: flex; align-items: stretch;
+  gap: 0; margin-bottom: 10px;
+  border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden;
+}
+.h-stage {
+  flex: 1; padding: 7px 6px; text-align: center;
+  border-right: 1px solid #E5E7EB; font-size: 7.5pt;
+}
+.h-stage:last-child { border-right: none; }
+.hs-num  { font-size: 8pt; font-weight: 800; color: #fff; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 3px; }
+.hs-name { font-weight: 700; font-size: 7.5pt; color: #111827; }
+.hs-lib  { font-size: 6.5pt; color: #6B7280; margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════ PAGE 1 ══════════════════════════════════ -->
+
+<div class="page-header">
+  <div>
+    <div class="ph-title">Cloud Drive RAG</div>
+    <div class="ph-sub">Architecture Explained — All Technologies, Versions &amp; Data Flow</div>
+  </div>
+  <div class="ph-badge">Page 1 of 3 · Layman's Guide</div>
+</div>
+
+<!-- What is this? -->
+<div class="answer-box">
+  <p><strong>What does this application do?</strong> It lets you upload documents (PDFs, Word files, spreadsheets) or connect your Google Drive, then ask questions about those documents in plain English. The app finds the most relevant paragraphs, passes them to an AI language model, and returns a cited answer — all in a few seconds.</p>
+  <p style="margin-top:4px"><strong>Why "RAG"?</strong> RAG stands for <strong>Retrieval-Augmented Generation</strong>. Instead of asking the AI to remember everything (which causes hallucinations), we first <em>retrieve</em> the relevant text from your documents, then <em>generate</em> an answer based only on that text. This makes answers accurate and verifiable.</p>
+</div>
+
+<!-- System layers -->
+<div class="section-title">How the System is Structured — Layer by Layer</div>
+<div class="layer-stack">
+  <div class="layer" style="background:#EFF6FF;border:1.5px solid #BFDBFE">
+    <div>
+      <div class="layer-name" style="color:#1D4ED8">🖥️ Layer 1 — User Interface (What you see)</div>
+      <div class="layer-tech" style="color:#3B82F6">React 18.3 · TypeScript 5.4 · Vite 5.3 · 5 Tabs: Chat, ChatWorkflow, Ingest, Metrics, Analytics</div>
+    </div>
+    <div><span class="tag tag-b">Port 5173 (dev)</span><span class="tag tag-b">Vercel (prod)</span></div>
+  </div>
+  <div class="layer-arr">↕ HTTPS requests &amp; Server-Sent Events (SSE) for streaming</div>
+  <div class="layer" style="background:#F0FDF4;border:1.5px solid #BBF7D0">
+    <div>
+      <div class="layer-name" style="color:#166534">🔀 Layer 2 — API Gateway (Traffic Controller)</div>
+      <div class="layer-tech" style="color:#16A34A">FastAPI 0.111 · Uvicorn 0.29 · JWT Auth (Keycloak) · SlowAPI Rate Limiter · CORS Middleware</div>
+    </div>
+    <div><span class="tag tag-g">Port 8000</span><span class="tag tag-g">Railway (prod)</span></div>
+  </div>
+  <div class="layer-arr">↕ Validated requests passed to the AI pipeline</div>
+  <div class="layer" style="background:#FFF7ED;border:1.5px solid #FED7AA">
+    <div>
+      <div class="layer-name" style="color:#C2410C">🧠 Layer 3 — AI Pipeline (The Brain)</div>
+      <div class="layer-tech" style="color:#EA580C">LangGraph 0.2.73 · LangChain 0.3+ · 6 sequential nodes · Groq LLM · Cohere Embeddings</div>
+    </div>
+    <div><span class="tag tag-o">StateGraph</span><span class="tag tag-o">Async</span></div>
+  </div>
+  <div class="layer-arr">↕ Queries vector DB and session memory</div>
+  <div class="layer" style="background:#FAF5FF;border:1.5px solid #E9D5FF">
+    <div>
+      <div class="layer-name" style="color:#6B21A8">🗄️ Layer 4 — Data Stores (Memory)</div>
+      <div class="layer-tech" style="color:#7C3AED">Qdrant Cloud (vectors, 1024-dim) · Redis (session history) · Google Drive API</div>
+    </div>
+    <div><span class="tag tag-p">Cloud APIs</span><span class="tag tag-p">External</span></div>
+  </div>
+</div>
+
+<!-- The full query flow -->
+<div class="section-title green">Step-by-Step: What Happens When You Ask a Question</div>
+<div class="big-flow">
+  <div class="flow-step" style="background:#EFF6FF">
+    <div class="step-num" style="background:#2563EB">1</div>
+    <div class="step-icon">⌨️</div>
+    <div class="step-name">You type a question</div>
+    <div class="step-desc">Your browser sends the question to the backend over HTTPS. A session ID tracks the conversation so the AI remembers previous messages.</div>
+    <div class="step-tech">React 18 · Axios 1.7<br>fetch() + SSE stream</div>
+  </div>
+  <div class="flow-step">
+    <div class="step-num" style="background:#16A34A">2</div>
+    <div class="step-icon">🔐</div>
+    <div class="step-name">Auth &amp; Rate check</div>
+    <div class="step-desc">FastAPI checks your identity token (JWT). SlowAPI enforces a 30 requests/minute limit to prevent abuse.</div>
+    <div class="step-tech">python-jose 3.3<br>slowapi 0.1.9</div>
+  </div>
+  <div class="flow-step" style="background:#FFFBEB">
+    <div class="step-num" style="background:#D97706">3</div>
+    <div class="step-icon">✏️</div>
+    <div class="step-name">Query is rewritten</div>
+    <div class="step-desc">The AI rewrites your question to be clearer and more specific. "What about storage?" becomes "What are the storage options in Google Cloud?"</div>
+    <div class="step-tech">Groq llama-3.3-70b<br>langchain-groq 0.2.4</div>
+  </div>
+  <div class="flow-step">
+    <div class="step-num" style="background:#DC2626">4</div>
+    <div class="step-icon">🛡️</div>
+    <div class="step-name">PII safety scan</div>
+    <div class="step-desc">The query is scanned for personal data (names, emails, SSNs, phone numbers). If found, it is blocked and never reaches the AI — protecting user privacy.</div>
+    <div class="step-tech">presidio-analyzer 2.2.354<br>spaCy 3.8.4 (12 MB model)</div>
+  </div>
+  <div class="flow-step" style="background:#F0FDF4">
+    <div class="step-num" style="background:#0891B2">5</div>
+    <div class="step-icon">🔍</div>
+    <div class="step-name">Vector search in documents</div>
+    <div class="step-desc">The question is converted to a list of 1,024 numbers (a "vector") by Cohere AI. Qdrant then finds the 5 most similar document chunks using cosine similarity math.</div>
+    <div class="step-tech">cohere 5.5.8 (embed-v3)<br>qdrant-client 1.9.1</div>
+  </div>
+  <div class="flow-step">
+    <div class="step-num" style="background:#7C3AED">6</div>
+    <div class="step-icon">📋</div>
+    <div class="step-name">Context assembled</div>
+    <div class="step-desc">The 5 best document chunks are combined with your previous questions (from Redis). This "context window" is what the AI will read to answer you.</div>
+    <div class="step-tech">langchain 0.3+<br>redis 5.0.6</div>
+  </div>
+  <div class="flow-step" style="background:#FFF7ED">
+    <div class="step-num" style="background:#EA580C">7</div>
+    <div class="step-icon">🤖</div>
+    <div class="step-name">AI generates answer</div>
+    <div class="step-desc">Groq's llama-3.3-70b reads only the retrieved context and writes an answer with source citations. Words stream back to your browser token-by-token in real time.</div>
+    <div class="step-tech">Groq API · llama-3.3-70b-versatile<br>temperature=0 · max 2048 tokens</div>
+  </div>
+  <div class="flow-step" style="background:#FFF5F5">
+    <div class="step-num" style="background:#DC2626">8</div>
+    <div class="step-icon">🔒</div>
+    <div class="step-name">Output safety scan</div>
+    <div class="step-desc">The AI's response is scanned again for any PII that might have leaked from your documents. Any detected entities are replaced with &lt;TYPE&gt; before reaching your screen.</div>
+    <div class="step-tech">presidio-anonymizer 2.2.354<br>spaCy en_core_web_sm</div>
+  </div>
+  <div class="flow-step" style="background:#F0FDF4">
+    <div class="step-num" style="background:#16A34A">9</div>
+    <div class="step-icon">✅</div>
+    <div class="step-name">Answer + citations returned</div>
+    <div class="step-desc">Clean answer with source links appears in your browser. The turn is saved to Redis so the AI remembers this exchange in your next question.</div>
+    <div class="step-tech">sse-starlette 2.1.0<br>redis 5.0.6</div>
+  </div>
+</div>
+
+<div class="page-footer">
+  <span>Cloud Drive RAG — Architecture Explained</span>
+  <span>Page 1 of 3</span>
+</div>
+
+
+<!-- ══════════════════════════════════ PAGE 2 ══════════════════════════════════ -->
+<div class="page-break"></div>
+
+<div class="page-header">
+  <div>
+    <div class="ph-title">Technologies Deep Dive</div>
+    <div class="ph-sub">Every library, what it does, and why it was chosen</div>
+  </div>
+  <div class="ph-badge">Page 2 of 3 · Tech Reference</div>
+</div>
+
+<!-- Frontend tech cards -->
+<div class="section-title">Frontend — What Runs in Your Browser</div>
+<div class="tech-grid">
+  <div class="tech-card" style="border-top:3px solid #3B82F6">
+    <div class="tc-icon">⚛️</div>
+    <div class="tc-name">React</div>
+    <div class="tc-version">v18.3.1</div>
+    <div class="tc-desc">The UI framework. Builds the Chat, Ingest, Metrics and Analytics tabs as interactive components. Updates only what changed — no full page reloads.</div>
+  </div>
+  <div class="tech-card" style="border-top:3px solid #F59E0B">
+    <div class="tc-icon">⚡</div>
+    <div class="tc-name">Vite</div>
+    <div class="tc-version">v5.3.1</div>
+    <div class="tc-desc">Build tool and dev server. Compiles TypeScript + React into optimised files for the browser. Hot-reloads the page during development in under 100ms.</div>
+  </div>
+  <div class="tech-card" style="border-top:3px solid #3178C6">
+    <div class="tc-icon">🔷</div>
+    <div class="tc-name">TypeScript</div>
+    <div class="tc-version">v5.4.5</div>
+    <div class="tc-desc">Adds type safety to JavaScript. Catches bugs at compile time before the code runs. All API data shapes, component props and store types are defined.</div>
+  </div>
+  <div class="tech-card" style="border-top:3px solid #FF6B35">
+    <div class="tc-icon">🐻</div>
+    <div class="tc-name">Zustand</div>
+    <div class="tc-version">v4.5.2</div>
+    <div class="tc-desc">Lightweight state manager. Holds chat messages, pipeline stage states, trace IDs and metric data. Components subscribe and re-render only when their slice changes.</div>
+  </div>
+  <div class="tech-card" style="border-top:3px solid #5A4FCF">
+    <div class="tc-icon">🔑</div>
+    <div class="tc-name">Keycloak-JS</div>
+    <div class="tc-version">v24.0.5</div>
+    <div class="tc-desc">Handles login via Keycloak identity server. Manages JWT tokens, refreshes them silently, and provides user email and roles (admin vs user) to the app.</div>
+  </div>
+  <div class="tech-card" style="border-top:3px solid #F43F5E">
+    <div class="tc-icon">🎨</div>
+    <div class="tc-name">Design System CSS</div>
+    <div class="tc-version">Custom · 700 lines</div>
+    <div class="tc-desc">A hand-crafted global CSS file with colour tokens, spacing scales, button styles, card styles and animation classes. Every component inherits from it — no duplicate styles anywhere.</div>
+  </div>
+</div>
+
+<!-- Backend tech cards -->
+<div class="section-title orange">Backend — What Runs on the Server (Python 3.11)</div>
+<div class="tech-grid">
+  <div class="tech-card" style="border-top:3px solid #009688">
+    <div class="tc-icon">🚀</div>
+    <div class="tc-name">FastAPI</div>
+    <div class="tc-version">v0.111.0</div>
+    <div class="tc-desc">The web framework. Defines all API routes, handles HTTP requests asynchronously, auto-generates Swagger docs at /docs, and validates all incoming data via Pydantic.</div>
+  </div>
+  <div class="tech-card" style="border-top:3px solid #4CAF50">
+    <div class="tc-icon">🦄</div>
+    <div class="tc-name">Uvicorn</div>
+    <div class="tc-version">v0.29.0</div>
+    <div class="tc-desc">The ASGI server that actually listens for HTTP connections and passes them to FastAPI. Uses Python asyncio, handles thousands of concurrent connections without blocking.</div>
+  </div>
+  <div class="tech-card" style="border-top:3px solid #1565C0">
+    <div class="tc-icon">🔗</div>
+    <div class="tc-name">LangChain</div>
+    <div class="tc-version">v≥0.3.20</div>
+    <div class="tc-desc">A toolkit for building LLM applications. Provides prompt templates, chain building, output parsers and integrations with 100+ AI services. Used for query rewriting and context assembly.</div>
+  </div>
+  <div class="tech-card" style="border-top:3px solid #E91E63">
+    <div class="tc-icon">🕸️</div>
+    <div class="tc-name">LangGraph</div>
+    <div class="tc-version">v≥0.2.73</div>
+    <div class="tc-desc">Builds the RAG pipeline as a directed graph of nodes. Each node is a step (rewrite, scan, retrieve…). Defines what happens after each step, including conditional routes (e.g. block if PII found).</div>
+  </div>
+  <div class="tech-card" style="border-top:3px solid #FF6B35">
+    <div class="tc-icon">⚡</div>
+    <div class="tc-name">Groq API</div>
+    <div class="tc-version">langchain-groq v0.2.4</div>
+    <div class="tc-desc">Provides access to llama-3.3-70b-versatile — a 70-billion parameter AI model. Groq's hardware delivers responses 10× faster than most cloud LLMs. Used for both query rewriting and answer generation.</div>
+  </div>
+  <div class="tech-card" style="border-top:3px solid #6366F1">
+    <div class="tc-icon">🧮</div>
+    <div class="tc-name">Cohere Embeddings</div>
+    <div class="tc-version">cohere v5.5.8</div>
+    <div class="tc-desc">Converts text into 1,024-dimensional number vectors (embeddings). Used at ingestion time (for every document chunk) and at query time. The embed-english-v3.0 model understands semantic meaning, not just keywords.</div>
+  </div>
+  <div class="tech-card" style="border-top:3px solid #FF4081">
+    <div class="tc-icon">📦</div>
+    <div class="tc-name">Qdrant Cloud</div>
+    <div class="tc-version">qdrant-client v1.9.1</div>
+    <div class="tc-desc">A vector database that stores all document chunks as 1,024-dim vectors. Answers "which chunks are most similar to this query?" using cosine similarity. Hosted on Qdrant Cloud — no local server needed.</div>
+  </div>
+  <div class="tech-card" style="border-top:3px solid #DC143C">
+    <div class="tc-icon">🔴</div>
+    <div class="tc-name">Redis</div>
+    <div class="tc-version">redis v5.0.6</div>
+    <div class="tc-desc">An in-memory database for session history. Remembers the last 20 turns of your conversation (TTL 1 hour). If Redis is unavailable, the app continues without history — it never crashes due to Redis.</div>
+  </div>
+  <div class="tech-card" style="border-top:3px solid #FF6B00">
+    <div class="tc-icon">🛡️</div>
+    <div class="tc-name">Microsoft Presidio</div>
+    <div class="tc-version">v2.2.354 + spaCy 3.8.4</div>
+    <div class="tc-desc">Open-source PII detection by Microsoft. Uses spaCy's en_core_web_sm NLP model (12 MB) to find names, emails, SSNs, credit cards, IPs and phone numbers. Runs twice: on input and on output.</div>
+  </div>
+</div>
+
+<!-- Document parsing -->
+<div class="section-title teal">Document Parsers — How Files Are Read</div>
+<div class="two-col">
+  <table class="mini-table">
+    <thead><tr><th>File Type</th><th>Library</th><th>Version</th><th>What it extracts</th></tr></thead>
+    <tbody>
+      <tr><td>📄 PDF</td><td>PyMuPDF (fitz)</td><td>1.24.5</td><td>Text from text-based PDFs only (not scanned)</td></tr>
+      <tr><td>📝 DOCX</td><td>python-docx</td><td>1.1.2</td><td>All paragraph text from Word documents</td></tr>
+      <tr><td>📊 PPTX</td><td>python-pptx</td><td>0.6.23</td><td>Text from all slides in a presentation</td></tr>
+      <tr><td>📈 XLSX</td><td>openpyxl</td><td>3.1.4</td><td>Cell values from all sheets in a spreadsheet</td></tr>
+      <tr><td>📃 TXT/CSV</td><td>Python built-in</td><td>—</td><td>Raw text read with UTF-8 encoding</td></tr>
+    </tbody>
+  </table>
+  <div>
+    <div class="info-box blue" style="margin-bottom:7px">
+      <strong>After parsing, every file goes through the same pipeline:</strong><br>
+      Parse text → PII scrub → Split into 512-token chunks (64 overlap) → Embed with Cohere → Store in Qdrant
+    </div>
+    <div class="info-box green">
+      <strong>Text Chunker: RecursiveCharacterTextSplitter</strong><br>
+      Library: langchain v0.3+ &nbsp;|&nbsp; Chunk size: 512 tokens<br>
+      Overlap: 64 tokens (so no sentence is cut in half between chunks)<br>
+      Separators tried in order: paragraph → line → sentence → word
+    </div>
+  </div>
+</div>
+
+<div class="page-footer">
+  <span>Cloud Drive RAG — Architecture Explained</span>
+  <span>Page 2 of 3</span>
+</div>
+
+
+<!-- ══════════════════════════════════ PAGE 3 ══════════════════════════════════ -->
+<div class="page-break"></div>
+
+<div class="page-header">
+  <div>
+    <div class="ph-title">Observability, Metrics &amp; Deployment</div>
+    <div class="ph-sub">What is measured, how it is deployed, and what the numbers mean</div>
+  </div>
+  <div class="ph-badge">Page 3 of 3 · Operations</div>
+</div>
+
+<!-- What gets measured -->
+<div class="section-title">What the Application Measures — Live Metrics Dashboard</div>
+<div class="metric-row">
+  <div class="metric-card mc-blue">
+    <div class="mc-val">P50/P95</div>
+    <div class="mc-lbl">Response Latency</div>
+    <div class="mc-sub">Median &amp; 95th percentile<br>query-to-answer time in ms</div>
+  </div>
+  <div class="metric-card mc-green">
+    <div class="mc-val">0–1.0</div>
+    <div class="mc-lbl">Context Precision</div>
+    <div class="mc-sub">How relevant are the<br>retrieved chunks? (&gt;0.7 = good)</div>
+  </div>
+  <div class="metric-card mc-orange">
+    <div class="mc-val">1,024</div>
+    <div class="mc-lbl">Embedding Dims</div>
+    <div class="mc-sub">Vector size for each<br>document chunk stored</div>
+  </div>
+  <div class="metric-card mc-purple">
+    <div class="mc-val">top-5</div>
+    <div class="mc-lbl">Chunks Retrieved</div>
+    <div class="mc-sub">Documents fetched per<br>query from Qdrant</div>
+  </div>
+</div>
+
+<div class="two-col">
+  <!-- Metrics tab -->
+  <div>
+    <div class="section-title slate" style="font-size:7.5pt">Metrics Tab Tracks</div>
+    <table class="mini-table">
+      <thead><tr><th>Metric</th><th>What it means</th></tr></thead>
+      <tbody>
+        <tr><td>Total queries</td><td>All questions asked since last restart</td></tr>
+        <tr><td>Success rate</td><td>% queries that returned a valid answer</td></tr>
+        <tr><td>PII detected</td><td>% queries that contained personal data</td></tr>
+        <tr><td>Avg latency</td><td>Average ms from question to first word</td></tr>
+        <tr><td>P50 / P95</td><td>Latency that 50% / 95% of queries beat</td></tr>
+        <tr><td>Context recall</td><td>% queries where relevant docs were found</td></tr>
+        <tr><td>Empty context rate</td><td>% queries with zero matching documents</td></tr>
+        <tr><td>Top sources</td><td>Which files are retrieved most often</td></tr>
+        <tr><td>Avg similarity score</td><td>How closely chunks matched each query</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <!-- Analytics tab -->
+  <div>
+    <div class="section-title purple" style="font-size:7.5pt">Analytics Tab Tracks</div>
+    <table class="mini-table">
+      <thead><tr><th>Metric</th><th>What it means</th></tr></thead>
+      <tbody>
+        <tr><td>Node latency</td><td>Time spent in each of the 6 pipeline steps</td></tr>
+        <tr><td>Input / Output tokens</td><td>Words sent to and received from Groq LLM</td></tr>
+        <tr><td>Cost estimate (USD)</td><td>Groq + Cohere API cost for all queries</td></tr>
+        <tr><td>Score distribution</td><td>Chunks split into noise / relevant / exact match</td></tr>
+        <tr><td>Query categories</td><td>On-topic vs borderline vs off-topic questions</td></tr>
+        <tr><td>Session depth</td><td>How many turns per conversation on average</td></tr>
+        <tr><td>Error taxonomy</td><td>Rate limit / LLM / Retrieval / Other errors</td></tr>
+        <tr><td>Index coverage</td><td>% of indexed documents actually retrieved</td></tr>
+        <tr><td>P95 node time</td><td>Worst-case time per pipeline stage</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ChatWorkflow tab -->
+<div class="section-title green">ChatWorkflow Tab — Real-Time Pipeline Observer</div>
+<div class="info-box blue" style="margin-bottom:7px">
+  The <strong>ChatWorkflow</strong> tab is an observability console built into the app. When you send a question, it shows every pipeline step executing live — like watching an assembly line. Each node shows its status (pending → running → completed), timing, and the exact functions called inside it. This helps developers understand exactly what the AI is doing and debug problems.
+</div>
+<div class="h-pipeline">
+  <div class="h-stage" style="background:#EFF6FF">
+    <div><span class="hs-num" style="background:#2563EB">1</span></div>
+    <div class="hs-name">Rewrite</div>
+    <div class="hs-lib">Groq LLM<br>~300ms</div>
+  </div>
+  <div class="h-stage">
+    <div><span class="hs-num" style="background:#DC2626">2</span></div>
+    <div class="hs-name">PII Scan In</div>
+    <div class="hs-lib">Presidio<br>~25ms</div>
+  </div>
+  <div class="h-stage" style="background:#F0FDF4">
+    <div><span class="hs-num" style="background:#0891B2">3</span></div>
+    <div class="hs-name">Retrieve</div>
+    <div class="hs-lib">Cohere + Qdrant<br>~200ms</div>
+  </div>
+  <div class="h-stage">
+    <div><span class="hs-num" style="background:#7C3AED">4</span></div>
+    <div class="hs-name">Assemble</div>
+    <div class="hs-lib">LangChain + Redis<br>~50ms</div>
+  </div>
+  <div class="h-stage" style="background:#FFF7ED">
+    <div><span class="hs-num" style="background:#EA580C">5</span></div>
+    <div class="hs-name">Generate</div>
+    <div class="hs-lib">Groq LLM<br>~650ms</div>
+  </div>
+  <div class="h-stage">
+    <div><span class="hs-num" style="background:#DC2626">6</span></div>
+    <div class="hs-name">PII Scan Out</div>
+    <div class="hs-lib">Presidio<br>~20ms</div>
+  </div>
+</div>
+
+<!-- Deployment -->
+<div class="section-title orange">Deployment Architecture</div>
+<div class="two-col">
+  <div>
+    <table class="mini-table">
+      <thead><tr><th>Component</th><th>Platform</th><th>Details</th></tr></thead>
+      <tbody>
+        <tr><td>Frontend</td><td>Vercel</td><td>Static build · Auto-deploy from GitHub main</td></tr>
+        <tr><td>Backend</td><td>Railway</td><td>Docker · python:3.11-slim · 1 GB RAM · 2 vCPU</td></tr>
+        <tr><td>Vector DB</td><td>Qdrant Cloud</td><td>Managed · REST + gRPC · cosine similarity</td></tr>
+        <tr><td>LLM</td><td>Groq Cloud</td><td>llama-3.3-70b · External API · no GPU needed</td></tr>
+        <tr><td>Embeddings</td><td>Cohere Cloud</td><td>embed-english-v3.0 · 1024-dim · API calls</td></tr>
+        <tr><td>Session store</td><td>Redis / Upstash</td><td>TTL 1hr · max 20 turns per session</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div>
+    <div class="info-box orange" style="margin-bottom:7px">
+      <strong>Docker Image Size: ~406 MB</strong><br>
+      Breakdown: Python 3.11-slim (120 MB) + all packages (~270 MB) + spaCy en_core_web_sm model (12 MB) + application code (4 MB)
+    </div>
+    <div class="info-box green">
+      <strong>Memory at runtime: ~320–500 MB</strong><br>
+      Idle: ~320 MB (spaCy + Presidio + FastAPI loaded)<br>
+      During query: ~450 MB (LangGraph pipeline active)<br>
+      Peak (ingestion): ~500 MB (chunking + embedding)
+    </div>
+  </div>
+</div>
+
+<!-- Observability tools -->
+<div class="section-title slate">Observability &amp; Monitoring Stack</div>
+<div class="three-col">
+  <div class="info-box blue">
+    <strong>OpenTelemetry SDK v1.24.0</strong><br>
+    Distributed tracing across all HTTP requests. Sends trace spans to any OTLP-compatible collector (Grafana Tempo, Jaeger). Disabled when no collector is running.
+  </div>
+  <div class="info-box green">
+    <strong>Prometheus Client v0.20.0</strong><br>
+    Exports metrics at /metrics endpoint. Tracks: node_duration_seconds (per pipeline step), docs_ingested_total (success/error), chunks_created_total.
+  </div>
+  <div class="info-box orange">
+    <strong>In-Process Tracers</strong><br>
+    metrics_tracker.py — query stats, latency, sources.<br>
+    analytics_tracker.py — node timings, token costs, errors. Both thread-safe, zero external dependency.
+  </div>
+</div>
+
+<!-- Security summary -->
+<div class="section-title teal">Security Layers</div>
+<div class="three-col">
+  <div class="tech-card">
+    <div style="font-size:12pt">🔑</div>
+    <div class="tc-name">JWT Authentication</div>
+    <div class="tc-version">python-jose 3.3.0</div>
+    <div class="tc-desc">Every API request must carry a valid Keycloak JWT token. The backend verifies the RS256 signature without calling Keycloak on every request.</div>
+  </div>
+  <div class="tech-card">
+    <div style="font-size:12pt">🛑</div>
+    <div class="tc-name">Rate Limiting</div>
+    <div class="tc-version">slowapi 0.1.9</div>
+    <div class="tc-desc">Maximum 30 requests per minute per IP address on query endpoints. Prevents automated abuse and runaway API cost.</div>
+  </div>
+  <div class="tech-card">
+    <div style="font-size:12pt">🕵️</div>
+    <div class="tc-name">Dual PII Scanning</div>
+    <div class="tc-version">presidio 2.2.354</div>
+    <div class="tc-desc">Personal data is blocked on input (before AI sees it) AND scrubbed on output (before you see it). Two independent safety nets for every query.</div>
+  </div>
+</div>
+
+<div class="page-footer">
+  <span>Cloud Drive RAG — Architecture Explained · All versions as of May 2026</span>
+  <span>Page 3 of 3</span>
+</div>
+
+</body>
+</html>

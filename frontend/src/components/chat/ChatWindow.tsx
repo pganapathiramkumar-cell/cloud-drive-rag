@@ -16,13 +16,7 @@ export default function ChatWindow() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#FFFFFF' }}>
 
       {/* ── Toolbar ── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '10px 24px',
-        borderBottom: '1px solid var(--ds-divider)',
-        background: 'var(--ds-bg)',
-        flexShrink: 0,
-      }}>
+      <div className="ds-chat-toolbar">
         <span style={{ fontSize: 13, color: 'var(--ds-text-3)', fontWeight: 500 }}>
           {messages.length === 0
             ? 'Ask anything about your indexed documents'
@@ -41,11 +35,7 @@ export default function ChatWindow() {
       </div>
 
       {/* ── Messages ── */}
-      <div style={{
-        flex: 1, overflowY: 'auto',
-        padding: '28px 24px', display: 'flex', flexDirection: 'column', gap: 20,
-        background: 'var(--ds-bg-3)',
-      }}>
+      <div className="ds-chat-messages">
         {messages.length === 0 && (
           <div className="ds-empty" style={{ height: '100%' }}>
             <div className="ds-empty-icon">

@@ -29,52 +29,47 @@ export default function Header({ activeTab, onTabChange }: Props) {
 
   return (
     <header className="ds-page-header">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
 
-        {/* ── Left: brand + nav ── */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '28px' }}>
-          {/* Brand */}
-          <div className="ds-brand">
-            <div className="ds-brand-logo">
-              <Bot size={15} />
-            </div>
-            <span className="ds-brand-name">Enterprise RAG</span>
-            <span className="ds-brand-tag">AI</span>
-          </div>
-
-          {/* Nav tabs */}
-          <nav className="ds-nav">
-            {TABS.map(({ id, label, icon, adminOnly }) => {
-              if (adminOnly && !isAdmin) return null
-              return (
-                <button
-                  key={id}
-                  onClick={() => onTabChange(id)}
-                  className={`ds-nav-tab ${activeTab === id ? 'ds-active' : ''}`}
-                >
-                  {icon}
-                  {label}
-                </button>
-              )
-            })}
-          </nav>
+      {/* ── Brand ── */}
+      <div className="ds-brand">
+        <div className="ds-brand-logo">
+          <Bot size={15} />
         </div>
-
-        {/* ── Right: user chip ── */}
-        <div className="ds-user-chip">
-          <div className="ds-avatar">{initials}</div>
-          <span className="ds-user-email">{email}</span>
-          <button
-            onClick={logout}
-            className="ds-btn ds-btn-danger-ghost ds-btn-sm"
-            style={{ marginLeft: '4px' }}
-          >
-            <LogOut size={13} />
-            Sign out
-          </button>
-        </div>
-
+        <span className="ds-brand-name">Enterprise RAG</span>
+        <span className="ds-brand-tag">AI</span>
       </div>
+
+      {/* ── Nav tabs (scrollable on mobile) ── */}
+      <nav className="ds-nav">
+        {TABS.map(({ id, label, icon, adminOnly }) => {
+          if (adminOnly && !isAdmin) return null
+          return (
+            <button
+              key={id}
+              onClick={() => onTabChange(id)}
+              className={`ds-nav-tab ${activeTab === id ? 'ds-active' : ''}`}
+            >
+              {icon}
+              {label}
+            </button>
+          )
+        })}
+      </nav>
+
+      {/* ── User chip ── */}
+      <div className="ds-user-chip">
+        <div className="ds-avatar">{initials}</div>
+        <span className="ds-user-email">{email}</span>
+        <button
+          onClick={logout}
+          className="ds-btn ds-btn-danger-ghost ds-btn-sm"
+          style={{ marginLeft: '4px' }}
+        >
+          <LogOut size={13} />
+          Sign out
+        </button>
+      </div>
+
     </header>
   )
 }

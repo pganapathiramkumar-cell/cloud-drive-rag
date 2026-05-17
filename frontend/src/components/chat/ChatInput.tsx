@@ -26,12 +26,7 @@ export default function ChatInput({ onSend, disabled }: Props) {
   const canSend = !disabled && value.trim().length > 0
 
   return (
-    <div style={{
-      borderTop: '1px solid var(--ds-divider)',
-      background: 'var(--ds-bg)',
-      padding: '16px 24px 20px',
-      flexShrink: 0,
-    }}>
+    <div className="ds-chat-input-area">
       <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
         <textarea
           rows={2}

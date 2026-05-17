@@ -149,7 +149,7 @@ export default function IngestPanel() {
             <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--ds-text-1)', marginBottom: 14 }}>
               Supported formats
             </p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
+            <div className="ds-grid-3" style={{ marginBottom: 16 }}>
               {SUPPORTED.map(t => (
                 <div key={t.ext} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                   <CheckCircle2 size={13} color="var(--ds-green-600)" style={{ marginTop: 1, flexShrink: 0 }} />
@@ -203,7 +203,7 @@ export default function IngestPanel() {
                 <div className="ds-progress-fill ds-fill-blue" style={{ width: `${progressPct}%` }} />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 10 }}>
+              <div className="ds-grid-3" style={{ marginBottom: 10 }}>
                 {[
                   { label: 'Indexed',    value: uploadProgress.done,                     color: 'var(--ds-green-600)' },
                   { label: 'Remaining',  value: uploadProgress.total - uploadProgress.done, color: 'var(--ds-orange-600)' },
@@ -323,7 +323,7 @@ export default function IngestPanel() {
             </p>
 
             <label className="ds-label-text">Drive folder URL or ID</label>
-            <div style={{ display: 'flex', gap: 10, marginBottom: 8 }}>
+            <div className="ds-input-row" style={{ marginBottom: 8 }}>
               <div className="ds-input-group" style={{ flex: 1 }}>
                 <Link2 size={13} className="ds-input-icon" />
                 <input
@@ -365,7 +365,7 @@ export default function IngestPanel() {
                 <StatusBadge status={syncJob.status} />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 16 }}>
+              <div className="ds-grid-4" style={{ marginBottom: 16 }}>
                 {([
                   { label: 'Found',   value: syncJob.files_found,   color: 'var(--ds-blue-600)' },
                   { label: 'Indexed', value: syncJob.files_indexed,  color: 'var(--ds-green-600)' },
@@ -465,7 +465,7 @@ export default function IngestPanel() {
                 <StatusBadge status={status} />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+              <div className="ds-grid-2" style={{ marginBottom: 12 }}>
                 {[
                   { label: 'Docs crawled',  value: job.docs_crawled,  color: 'var(--ds-blue-600)' },
                   { label: 'Chunks stored', value: job.chunks_stored, color: 'var(--ds-green-600)' },

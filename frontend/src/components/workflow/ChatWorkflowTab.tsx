@@ -61,12 +61,7 @@ export default function ChatWorkflowTab() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--ds-bg-3)' }}>
 
       {/* ── Tab header ── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '10px 24px',
-        background: 'var(--ds-bg)', borderBottom: '1px solid var(--ds-divider)',
-        flexShrink: 0,
-      }}>
+      <div className="ds-chat-toolbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--ds-text-1)' }}>ChatWorkflow</span>
           <span className="ds-badge ds-badge-info" style={{ fontSize: 10 }}>Observability</span>
@@ -90,11 +85,7 @@ export default function ChatWorkflowTab() {
       </div>
 
       {/* ── Query input ── */}
-      <div style={{
-        padding: '12px 24px',
-        background: 'var(--ds-bg)', borderBottom: '1px solid var(--ds-divider)',
-        flexShrink: 0,
-      }}>
+      <div className="ds-workflow-query">
         <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
           <textarea
             rows={2}
@@ -138,10 +129,10 @@ export default function ChatWorkflowTab() {
             </p>
           </div>
         ) : (
-          <div style={{ flex: 1, overflow: 'hidden', display: 'flex', gap: 0 }}>
+          <div className="ds-workflow-split">
 
             {/* ── Left: Pipeline + Answer ── */}
-            <div style={{ flex: '0 0 60%', overflowY: 'auto', padding: '20px 20px 20px 24px', borderRight: '1px solid var(--ds-divider)' }}>
+            <div className="ds-workflow-left">
               <TraceHeader trace={store.trace} />
               <PipelineFlow />
 
@@ -171,7 +162,7 @@ export default function ChatWorkflowTab() {
                       <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--ds-text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
                         Sources
                       </p>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+                      <div className="ds-grid-2" style={{ gap: 8 }}>
                         {store.answer.citations.map((c, i) => (
                           <a key={i} href={c.url} target="_blank" rel="noopener noreferrer"
                             className="ds-card ds-card-hover"
@@ -196,7 +187,7 @@ export default function ChatWorkflowTab() {
             </div>
 
             {/* ── Right: Metrics sidebar ── */}
-            <div style={{ flex: '0 0 40%', overflowY: 'auto', padding: '20px 24px 20px 20px' }}>
+            <div className="ds-workflow-right">
               <MetricsSidebar />
             </div>
 
