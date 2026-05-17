@@ -1,5 +1,5 @@
-import { ShieldAlert } from 'lucide-react'
-import type { Message } from '../../types'
+import { ShieldAlert, User, Bot } from 'lucide-react'
+import type { Message } from '../../types/index'
 import SourceCard from './SourceCard'
 
 interface Props { message: Message }
@@ -8,32 +8,60 @@ export default function MessageBubble({ message }: Props) {
   const isUser = message.role === 'user'
 
   return (
-    <div className={`flex flex-col gap-2 ${isUser ? 'items-end' : 'items-start'}`}>
-      <div
-        className={`max-w-2xl rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
-          isUser
-            ? 'bg-brand-600 text-white rounded-br-sm'
-            : 'bg-gray-800 text-gray-100 rounded-bl-sm'
-        }`}
-      >
-        {message.content}
-        {message.streaming && (
-          <span className="ml-1 inline-block h-3 w-0.5 animate-pulse bg-gray-400" />
-        )}
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: isUser ? 'flex-end' : 'flex-start',
+      gap: 8,
+    }}>
+      {/* Role label */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 6,
+        flexDirection: isUser ? 'row-reverse' : 'row',
+      }}>
+        <div style={{
+          width: 22, height: 22, borderRadius: '50%',
+          background: isUser ? 'var(--ds-blue-600)' : 'var(--ds-bg-3)',
+          border: isUser ? 'none' : '1px solid var(--ds-border)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0,
+        }}>
+          {isUser
+            ? <User size={11} color="#fff" />
+            : <Bot size={11} color="var(--ds-text-3)" />
+          }
+        </div>
+        <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--ds-text-4)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+          {isUser ? 'You' : 'Assistant'}
+        </span>
       </div>
 
+      {/* Bubble */}
+      <div className={isUser ? 'ds-chat-bubble-user' : 'ds-chat-bubble-ai'}>
+        {message.content}
+        {message.streaming && <span className="ds-streaming-cursor" />}
+      </div>
+
+      {/* PII warning */}
       {message.piiDetected && (
-        <div className="flex items-center gap-1 text-xs text-amber-400">
-          <ShieldAlert size={12} />
+        <span className="ds-pii-tag">
+          <ShieldAlert size={11} />
           PII detected and redacted
-        </div>
+        </span>
       )}
 
+      {/* Citations */}
       {!isUser && message.citations && message.citations.length > 0 && (
-        <div className="w-full max-w-2xl">
-          <p className="mb-1.5 text-xs text-gray-500">Sources</p>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {message.citations.map((c) => (
+        <div style={{ width: '100%', maxWidth: 640 }}>
+          <p style={{
+            fontSize: 11, fontWeight: 700, color: 'var(--ds-text-3)',
+            textTransform: 'uppercase', letterSpacing: '0.08em',
+            marginBottom: 10, marginTop: 4,
+          }}>
+            Sources
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+            {message.citations.map(c => (
               <SourceCard key={c.index} citation={c} />
             ))}
           </div>

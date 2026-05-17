@@ -1,83 +1,72 @@
-import { LogOut, Database, BarChart2, Activity } from 'lucide-react'
+import { LogOut, Database, BarChart2, Activity, Bot, GitBranch } from 'lucide-react'
 import { getUserInfo, logout } from '../../auth/keycloak'
 
 interface Props {
-  activeTab: 'chat' | 'ingest' | 'metrics' | 'analytics'
-  onTabChange: (tab: 'chat' | 'ingest' | 'metrics' | 'analytics') => void
+  activeTab: 'chat' | 'workflow' | 'ingest' | 'metrics' | 'analytics'
+  onTabChange: (tab: 'chat' | 'workflow' | 'ingest' | 'metrics' | 'analytics') => void
 }
 
+const TABS = [
+  { id: 'chat',      label: 'Chat',         icon: null                      },
+  { id: 'workflow',  label: 'ChatWorkflow',  icon: <GitBranch size={13} />   },
+  { id: 'ingest',    label: 'Ingest',        icon: <Database size={13} />,   adminOnly: true },
+  { id: 'metrics',   label: 'Metrics',       icon: <BarChart2 size={13} />,  adminOnly: true },
+  { id: 'analytics', label: 'Analytics',     icon: <Activity size={13} />,   adminOnly: true },
+] as const
+
 export default function Header({ activeTab, onTabChange }: Props) {
-  const user = getUserInfo()
-  const isAdmin = user.roles.includes('admin')
+  const user     = getUserInfo()
+  const isAdmin  = user.roles.includes('admin')
+  const email    = user.email || user.userId || 'user'
+  const initials = email.slice(0, 2).toUpperCase()
 
   return (
-    <header className="flex items-center justify-between border-b border-gray-800 bg-gray-900 px-6 py-3">
-      <div className="flex items-center gap-4">
-        <span className="text-lg font-semibold text-brand-500">Enterprise RAG</span>
+    <header className="ds-page-header">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
 
-        <nav className="flex gap-1">
+        {/* ── Left: brand + nav ── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '28px' }}>
+          {/* Brand */}
+          <div className="ds-brand">
+            <div className="ds-brand-logo">
+              <Bot size={15} />
+            </div>
+            <span className="ds-brand-name">Enterprise RAG</span>
+            <span className="ds-brand-tag">AI</span>
+          </div>
+
+          {/* Nav tabs */}
+          <nav className="ds-nav">
+            {TABS.map(({ id, label, icon, adminOnly }) => {
+              if (adminOnly && !isAdmin) return null
+              return (
+                <button
+                  key={id}
+                  onClick={() => onTabChange(id)}
+                  className={`ds-nav-tab ${activeTab === id ? 'ds-active' : ''}`}
+                >
+                  {icon}
+                  {label}
+                </button>
+              )
+            })}
+          </nav>
+        </div>
+
+        {/* ── Right: user chip ── */}
+        <div className="ds-user-chip">
+          <div className="ds-avatar">{initials}</div>
+          <span className="ds-user-email">{email}</span>
           <button
-            onClick={() => onTabChange('chat')}
-            className={`rounded px-3 py-1.5 text-sm transition-colors ${
-              activeTab === 'chat'
-                ? 'bg-brand-600 text-white'
-                : 'text-gray-400 hover:text-white'
-            }`}
+            onClick={logout}
+            className="ds-btn ds-btn-danger-ghost ds-btn-sm"
+            style={{ marginLeft: '4px' }}
           >
-            Chat
+            <LogOut size={13} />
+            Sign out
           </button>
+        </div>
 
-          {isAdmin && (
-            <button
-              onClick={() => onTabChange('ingest')}
-              className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-sm transition-colors ${
-                activeTab === 'ingest'
-                  ? 'bg-brand-600 text-white'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              <Database size={14} />
-              Ingest
-            </button>
-          )}
-          {isAdmin && (
-            <button
-              onClick={() => onTabChange('metrics')}
-              className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-sm transition-colors ${
-                activeTab === 'metrics'
-                  ? 'bg-brand-600 text-white'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              <BarChart2 size={14} />
-              Metrics
-            </button>
-          )}
-          {isAdmin && (
-            <button
-              onClick={() => onTabChange('analytics')}
-              className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-sm transition-colors ${
-                activeTab === 'analytics'
-                  ? 'bg-brand-600 text-white'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              <Activity size={14} />
-              Analytics
-            </button>
-          )}
-        </nav>
-      </div>
-
-      <div className="flex items-center gap-3 text-sm text-gray-400">
-        <span>{user.email || user.userId}</span>
-        <button
-          onClick={logout}
-          className="flex items-center gap-1 rounded px-2 py-1 hover:bg-gray-800 hover:text-white"
-        >
-          <LogOut size={14} />
-          Sign out
-        </button>
       </div>
     </header>
   )

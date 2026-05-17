@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { initKeycloak } from './keycloak'
+import { initKeycloak } from '../../auth/keycloak'
 import { Bot, AlertCircle } from 'lucide-react'
 
 const SKIP_AUTH = import.meta.env.VITE_SKIP_AUTH === 'true'
@@ -20,12 +20,12 @@ export default function AuthGuard({ children }: Props) {
   if (error) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--ds-bg-3)' }}>
       <div className="ds-card" style={{ maxWidth: 420, width: '100%', textAlign: 'center' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
           <div style={{ width: 48, height: 48, borderRadius: 12, background: 'var(--ds-red-100)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <AlertCircle size={22} color="var(--ds-red-600)" />
+            <AlertCircle size={24} color="var(--ds-red-600)" />
           </div>
         </div>
-        <p style={{ fontWeight: 700, fontSize: 16, color: 'var(--ds-text-1)', marginBottom: 8 }}>
+        <p style={{ fontWeight: 600, fontSize: 15, color: 'var(--ds-text-1)', marginBottom: 8 }}>
           Authentication Error
         </p>
         <p style={{ fontSize: 13, color: 'var(--ds-text-3)', lineHeight: 1.6, marginBottom: 16 }}>

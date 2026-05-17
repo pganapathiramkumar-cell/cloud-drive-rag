@@ -1,5 +1,5 @@
 import { useState, KeyboardEvent } from 'react'
-import { Send } from 'lucide-react'
+import { Send, Loader2 } from 'lucide-react'
 
 interface Props {
   onSend:   (msg: string) => void
@@ -23,24 +23,42 @@ export default function ChatInput({ onSend, disabled }: Props) {
     }
   }
 
+  const canSend = !disabled && value.trim().length > 0
+
   return (
-    <div className="flex items-end gap-2 border-t border-gray-800 bg-gray-900 p-4">
-      <textarea
-        rows={1}
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder="Ask about Google Cloud Platform…"
-        disabled={disabled}
-        className="flex-1 resize-none rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-sm text-gray-100 placeholder-gray-500 focus:border-brand-500 focus:outline-none disabled:opacity-50"
-      />
-      <button
-        onClick={handleSend}
-        disabled={disabled || !value.trim()}
-        className="rounded-xl bg-brand-600 p-3 text-white transition-colors hover:bg-brand-700 disabled:opacity-40"
-      >
-        <Send size={16} />
-      </button>
+    <div style={{
+      borderTop: '1px solid var(--ds-divider)',
+      background: 'var(--ds-bg)',
+      padding: '16px 24px 20px',
+      flexShrink: 0,
+    }}>
+      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+        <textarea
+          rows={2}
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Ask about your documents… (Enter to send, Shift+Enter for newline)"
+          disabled={disabled}
+          className="ds-input ds-textarea"
+          style={{ flex: 1, fontSize: 14, lineHeight: 1.6, paddingTop: 10, paddingBottom: 10 }}
+        />
+        <button
+          onClick={handleSend}
+          disabled={!canSend}
+          className="ds-btn ds-btn-primary"
+          style={{ padding: '10px 16px', borderRadius: 10, alignSelf: 'flex-end', flexShrink: 0 }}
+          title="Send message"
+        >
+          {disabled
+            ? <Loader2 size={17} style={{ animation: 'ds-spin 0.75s linear infinite' }} />
+            : <Send size={17} />
+          }
+        </button>
+      </div>
+      <p style={{ fontSize: 11, color: 'var(--ds-text-4)', marginTop: 6 }}>
+        Enter to send · Shift+Enter for newline
+      </p>
     </div>
   )
 }
