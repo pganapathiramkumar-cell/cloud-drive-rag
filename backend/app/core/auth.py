@@ -1,3 +1,4 @@
+import os
 from functools import lru_cache
 
 import httpx
@@ -10,6 +11,10 @@ from app.config import settings
 security = HTTPBearer(auto_error=False)
 
 _DEV_USER = {"user_id": "dev-user", "email": "dev@localhost", "roles": ["admin", "user"]}
+
+# Read directly from os.environ — bypasses pydantic-settings cache/parsing issues
+_SKIP_AUTH = os.environ.get("SKIP_AUTH", "").lower() == "true" \
+          or os.environ.get("DEBUG", "").lower() == "true"
 
 
 @lru_cache(maxsize=1)
@@ -38,8 +43,8 @@ async def _get_jwks() -> dict:
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> dict:
-    # Dev bypass: accept "dev-token" when DEBUG=true (never enable in production)
-    if settings.debug:
+    # Dev bypass: accept "dev-token" when SKIP_AUTH=true or DEBUG=true
+    if _SKIP_AUTH:
         if credentials is None or credentials.credentials == "dev-token":
             return _DEV_USER
 
