@@ -1,10 +1,15 @@
 """OpenTelemetry setup — auto-instruments FastAPI; exports to OTLP (Grafana Tempo)."""
+import os
 from fastapi import FastAPI
 
 from app.config import settings
 
 
 def setup_tracing(app: FastAPI) -> None:
+    # Read directly from os.environ so OTEL_ENABLED=false on Railway always works
+    otel_enabled = os.environ.get("OTEL_ENABLED", "").lower()
+    if otel_enabled == "false":
+        return
     if not settings.otel_enabled:
         return
 
